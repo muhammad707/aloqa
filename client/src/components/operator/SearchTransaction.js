@@ -12,8 +12,10 @@ import { Breadcrumb,
         Icon,
         Modal,
         DatePicker, 
-        Select
+        Select,
+        notification
          } from 'antd';
+    import Column from 'antd/lib/table/Column';
     import { getJwt } from '../../helpers/jwt';
 const FormItem = Form.Item;
 const Option = Select.Option;
@@ -69,7 +71,10 @@ class SearchTransaction extends Component {
                 Authorization: getJwt()
             }
         }).then((res => {
-            this.setState({ receive_department: res.data.result[0].Branch.MFO })
+            this.setState({ 
+                operator_id: res.data.result[0].id,
+                receive_department: res.data.result[0].Branch.MFO 
+            })
         }));
 
         axios.get('/api/currencylist', {
@@ -101,35 +106,6 @@ class SearchTransaction extends Component {
         });
     }
 
-    columns = [{
-        title: 'Ф.И.Ш',
-        dataIndex: 'sender_fullname',
-        key: 'sender_fullname'
-    }, {
-        title: 'Пасспорт маьлумотлари',
-        dataIndex: 'sender_passport_info',
-        key: 'sender_passport_info'
-    }, {
-        title: 'Жонатма микдори',
-        dataIndex: 'amount',
-        key: 'amount'
-    }, {
-        title: 'Пул бирлиги',
-        dataIndex: 'currency',
-        key: 'currency'
-    }, {
-        title: 'Отказма коди',
-        dataIndex: 'secretCode',
-        key: 'secretCode'
-    }, {
-        title: 'Статус',
-        dataIndex: 'status',
-        key: 'status'
-    }, {
-        title: 'Кабул килиш',
-        key: 'action',
-        render: () => <Button onClick={this.showModal} type="primary"><Icon type="edit"></Icon></Button>
-    }];
     formItemLayout = {
         labelCol: {
           xs: { span: 24 },
@@ -171,7 +147,6 @@ class SearchTransaction extends Component {
             console.log(res.data.array[0].status)
             if(res.data.success) {
                 this.setState({
-                    transaction: res.data.array,   
                     secretCode: res.data.array[0].secretCode,
                     transaction_id: res.data.array[0].transaction_id,
                     fullName: res.data.array[0].sender_fullname,
@@ -181,13 +156,50 @@ class SearchTransaction extends Component {
                     createdAt: res.data.array[0].createdAt,
                     status: res.data.array[0].status
                 });
-                message.success(res.data.message);
-            } 
-            else { 
+                const listItem = (
+                        <Table rowKey="transaction_id" dataSource={res.data.array}>
+                            <Column 
+                                title="Ф.И.Ш"
+                                key="sender_fullname"
+                                dataIndex="sender_fullname" />
+                            <Column 
+                                title="Пасспорт маьлумотлари"
+                                key="sender_passport_info"
+                                dataIndex="sender_passport_info" />
+                            <Column 
+                                title="Жонатма микдори"
+                                key="amount"
+                                dataIndex="amount" />
+                            <Column 
+                                title="Пул бирлиги"
+                                key="currency"
+                                dataIndex="currency" />
+                            <Column 
+                                title="Отказма коди"
+                                key="secretCode"
+                                dataIndex="secretCode" />
+                            <Column 
+                                title="Статус"
+                                key="status"
+                                dataIndex="status" />
+                            <Column 
+                                title="Кабул килиш" 
+                                key="action"
+                                render={() => (
+                                    <div>
+                                        <Button disabled={this.state.status === 'оплачен' ? true : false} onClick={() => this.showModal()}>
+                                            <Icon  type="edit"/>
+                                        </Button>
+                                    </div>
+                                )} />
+                    </Table>
+                );
                 this.setState({
-                    secretCode: ""
-                });
-                message.error("Tranaction not found");
+                    transaction: listItem,   
+                })
+                message.success(res.data.message);
+            } else { 
+                message.error(res.data.message);
             }
         }).catch(e => {
             that.setState({
@@ -231,43 +243,58 @@ class SearchTransaction extends Component {
    
     handleOk = () => {
 
-        this.setState({ loading: true });
-        setTimeout(() => {
+        if(this.state.receive_department && 
+            this.state.receiver_fullname &&
+            this.state.receiver_passport_series &&
+            this.state.receiver_passport_number &&
+            this.state.receiver_passport_date_of_issue &&
+            this.state.receiver_passport_place_of_given &&
+            this.state.receiver_permanent_address &&
+            this.state.receiver_phone_number &&
+            this.state.receiver_account_number &&
+            this.state.receive_currency_type &&
+            this.state.receive_payment_method) {
+
             this.setState({ loading: false, visible: false});
-        }, 3000);
 
-        let formData = {};
-        formData.receive_department = this.state.receive_department;
-        formData.receiver_fullname = this.state.receiver_fullname;
-        formData.receiver_passport_series = this.state.receiver_passport_series;
-        formData.receiver_passport_number = this.state.receiver_passport_number;
-        formData.receiver_passport_date_of_issue = this.state.receiver_passport_date_of_issue;
-        formData.receiver_passport_date_of_expiry = this.state.receiver_passport_date_of_expiry;
-        formData.receiver_passport_place_of_given = this.state.receiver_passport_place_of_given;
-        formData.receiver_permanent_address = this.state.receiver_permanent_address;
-        formData.receiver_phone_number = this.state.receiver_phone_number;
-        formData.receiver_account_number = this.state.receiver_account_number;
-        formData.receive_currency_type = this.state.receive_currency_type;
-        formData.receive_payment_method = this.state.receive_payment_method;
-        formData.secretCode = this.state.secretCode;
-        formData.status = "2";
-        console.log(formData);
+            let formData = {};
+            formData.receive_operator = this.state.operator_id;
+            formData.receive_department = this.state.receive_department;
+            formData.receiver_fullname = this.state.receiver_fullname;
+            formData.receiver_passport_series = this.state.receiver_passport_series;
+            formData.receiver_passport_number = this.state.receiver_passport_number;
+            formData.receiver_passport_date_of_issue = this.state.receiver_passport_date_of_issue;
+            formData.receiver_passport_date_of_expiry = this.state.receiver_passport_date_of_expiry;
+            formData.receiver_passport_place_of_given = this.state.receiver_passport_place_of_given;
+            formData.receiver_permanent_address = this.state.receiver_permanent_address;
+            formData.receiver_phone_number = this.state.receiver_phone_number;
+            formData.receiver_account_number = this.state.receiver_account_number;
+            formData.receive_currency_type = this.state.receive_currency_type;
+            formData.receive_payment_method = this.state.receive_payment_method;
+            formData.secretCode = this.state.secretCode;
+            formData.status = "2";
+            console.log(formData);
 
-        axios.post('/api/confirmtransaction/' + this.state.secretCode, formData, {
-            headers: {
-                Authorization: getJwt()
-            }
-        }).then(res => {
-            if(res.data.success) {
-                message.success(res.data.message);
-                this.setState({
-                    status: 'оплачен'
-                });
-            }
-           
-        }).catch(e => {
-            console.log("err");
-        });
+            axios.post('/api/confirmtransaction/' + this.state.secretCode, formData, {
+                headers: {
+                    Authorization: getJwt()
+                }
+            }).then(res => {
+                if(res.data.success) {
+                    message.success(res.data.message);
+                    this.setState({
+                        status: 'оплачен'
+                    });
+                }
+            
+            }).catch(e => {
+                console.log("err");
+            });
+        } else {
+            notification["error"]({
+                message: "Маьлумот кам"
+            });
+        }
     }
 
     handleCancel = () => {
@@ -312,8 +339,9 @@ class SearchTransaction extends Component {
                             </Col>
                         </Row>
                     </Form>
-                    <Table rowKey="transaction_id" columns={this.columns} 
-                            dataSource={this.state.transaction}/>
+                    {/* <Table rowKey="transaction_id" columns={this.columns} 
+                            dataSource={this.state.transaction}/> */}
+                    {this.state.transaction}
                 </div>
                 <Modal 
                     title={`Жонатмани кабул килиш (${this.state.createdAt})`}
@@ -333,7 +361,7 @@ class SearchTransaction extends Component {
                                     <Input name="" value={this.state.secretCode}  disabled/>
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Ф.И.Ш">
-                                    <Input name="receiver_fullname" value={this.state.fullName} placeholder="Ф.И.Ш" disabled/>
+                                    <Input name="receiver_fullname" value={this.state.fullName} placeholder="Ф.И.Ш" disabled />
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Пасспорт маьлумотлари">
                                     <Input value={this.state.passport_info} placeholder="Пасспорт маьлумотлари" disabled/>
@@ -355,10 +383,10 @@ class SearchTransaction extends Component {
                                 <Input name="receiver_fullname" id="success" placeholder="Ф.И.Ш" onChange={e => this.change(e)}/>
                             </FormItem>
                             <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Пасспорт сериаси">
-                                <Input name="receiver_passport_series" id="success" placeholder="Пасспорт сериаси" onChange={e => this.change(e)} />
+                                <Input name="receiver_passport_series" maxLength="2" id="success" placeholder="Пасспорт сериаси" onChange={e => this.change(e)} />
                             </FormItem>
                             <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Пасспорт номери">
-                                <Input name="receiver_passport_number" id="success" placeholder="Пасспорт номери" onChange={e => this.change(e)} />
+                                <Input name="receiver_passport_number" maxLength="7" id="success" placeholder="Пасспорт номери" onChange={e => this.change(e)} />
                             </FormItem>
                             <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Берилган вакти">
                                 <DatePicker size="default" name="receiver_passport_date_of_issue" placeholder="Паспорт берилган санаси" style={{ width: '100%' }} onChange={e => this.handleDate(e)} />

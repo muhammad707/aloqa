@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import AdminLayout from '../layout/AdminLayout';
-import { Breadcrumb, Select,  Button, Table,notification, Icon, Modal, Form, Input } from 'antd';
+import { Breadcrumb, Divider, Popconfirm, Select,  Button, Table,notification, Icon, Modal, Form, Input } from 'antd';
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
 import Column from 'antd/lib/table/Column';
@@ -25,7 +25,10 @@ class Operators extends Component {
             branchId: undefined,
             roleId: undefined,
             username: undefined,
-            password: undefined
+            password: undefined,
+            modalText: "Оператор кошиш",
+            url: "add",
+            id: undefined
 
         }
         // this.handleAdd = this.handleAdd.bind(this);
@@ -34,6 +37,8 @@ class Operators extends Component {
         this.handleSelect = this.handleSelect.bind(this);
         this.handleSelect2 = this.handleSelect2.bind(this);
         this.handleOk = this.handleOk.bind(this);
+        this.onEdit = this.onEdit.bind(this);
+        this.onDelete = this.onDelete.bind(this);
     }
 
     componentDidMount(){
@@ -72,6 +77,44 @@ class Operators extends Component {
         });
     }
 
+    onDelete(id) {
+        axios.get('/admin/operators/delete/' + id, {
+            headers: {
+                Authorization: getJwt()
+            }
+        }).then(res => {
+            console.log(res.data);
+            if(res.data.success) {
+                notification['success']({
+                    message:  res.data.message
+                });
+                this.fetchOperators();
+            } else {
+                notification['error']({
+                    message:  res.data.message
+                });
+            }
+        }).catch(err => {
+            notification['error']({
+                message: "Хатолик"
+            });
+        })
+    }
+
+    onEdit(data) {
+        console.log(data);
+        this.setState({
+            firstName: data.firstName,
+            lastName: data.lastName,
+            middleName: data.middleName,
+            MFO: data.MFO,
+            username: data.username,
+            url: "update",
+            modalText: "Озгартириш",
+            id: data.operator_id
+        });
+        this.showModal();
+    }
 
     fetchOperators = () => {
         this.setState({
@@ -103,13 +146,31 @@ class Operators extends Component {
                         key="MFO"
                         dataIndex="MFO" />
                     <Column 
-                        title="Филиал номи" 
+                        title="Филиал номи"
                         key="Branch"
                         dataIndex="Branch" />
                     <Column 
+                        title="Логин" 
+                        key="username"
+                        dataIndex="username" />
+                    <Column 
                         title="Бошкариш" 
                         key="action"
-                        render =  { () => <Button onClick={this.showModal2} type="primary"><Icon type="edit"></Icon></Button> } /> 
+                        render={(text, record) => (
+                            <div>
+                                <Icon type="edit" onClick={() => this.onEdit(record)}/>
+                                <Divider type="vertical"/>
+                                <Popconfirm
+                                    title=" Учирилсинми ?"
+                                    onConfirm={() => {
+                                        this.onDelete(record.operator_id);
+                                    }}
+                                    okText="Да"
+                                    cancelText="Нет">
+                                    <Icon type="delete"/>
+                                </Popconfirm>
+                            </div>
+                        )} /> 
                 </Table>
             );
             this.setState({
@@ -161,7 +222,13 @@ class Operators extends Component {
 
     handleCancel = () => {
         this.setState({
-            visible: false
+            visible: false,
+            firstName: "",
+            lastName: "",
+            middleName: "",
+            username: "",
+            modalText: "Кушиш",
+            url: "add"
         });
     }
 
@@ -178,6 +245,7 @@ class Operators extends Component {
                 confirmLoading: true
                });
             let formData = {};
+            formData.operator_id = this.state.id;
             formData.firstName = this.state.firstName;
             formData.lastName = this.state.lastName;
             formData.middleName = this.state.middleName;
@@ -187,24 +255,32 @@ class Operators extends Component {
             formData.password = this.state.password;
             console.log(formData);
             
-            axios.post('/admin/add', formData, {
+            axios.post('/admin/operators/' + this.state.url, formData, {
                 headers: {
                     Authorization: getJwt()
                 }
             }).then(res => {
                 console.log(res.data);
                 if(res.data.success) {
+                    this.setState({ 
+                        loading: true,
+                        firstName: "",
+                        lastName: "",
+                        middleName: "",
+                        username: "",
+                        password: "",
+                        url: "add"
+                    });
                     notification["success"]({
                         message: res.data.message
                     });
-                    this.fetchOperators();
-                    this.setState({ loading: true });
-                    setTimeout(() => {
-                         this.setState({ loading: false, visible: false});
-                    }, 3000);
+                   this.fetchOperators();
                 }
-            })
-            
+            });
+            this.setState({
+                visible: false
+            });
+            this.fetchOperators();
         } else {
             notification["error"]({
                 message: "Хатолик",
@@ -229,7 +305,7 @@ class Operators extends Component {
                     </Icon>
                     Оператор кошиш
                     </Button>
-                    <Modal title="Оператор кошиш"
+                    <Modal title={this.state.modalText}
                     style={{ top: 20 }}
                     visible={this.state.visible}
                     onOk={this.handleAdd}
@@ -240,13 +316,13 @@ class Operators extends Component {
                    ]}>
                     <Form>
                         <FormItem label="Исм">
-                                <Input name="firstName" placeholder="Исм" onChange={e => this.change(e)} />
+                                <Input name="firstName" value = {this.state.firstName} placeholder="Исм" onChange={e => this.change(e)} />
                             </FormItem>
                             <FormItem label="Фамилияси">
-                                <Input name="lastName" placeholder="Фамилия" onChange={e => this.change(e)} />
+                                <Input name="lastName" value={this.state.lastName} placeholder="Фамилия" onChange={e => this.change(e)} />
                             </FormItem>
                             <FormItem label="Отасининг исми">
-                                <Input name="middleName" placeholder="Отасининг исми" onChange={e => this.change(e)} />
+                                <Input name="middleName" value={this.state.middleName} placeholder="Отасининг исми" onChange={e => this.change(e)} />
                             </FormItem>
                             <FormItem label="МФО">
                                 <Select name="branchId" size="default" onChange={this.handleSelect}>
@@ -254,10 +330,10 @@ class Operators extends Component {
                                 </Select>
                             </FormItem>
                             <FormItem label="Логин">
-                                <Input name="username" placeholder="Логин" onChange={e => this.change(e)} />
+                                <Input name="username" value={this.state.username} placeholder="Логин" onChange={e => this.change(e)} />
                             </FormItem>
                             <FormItem label="Парол">
-                                <Input name="password" placeholder="Парол" onChange={e => this.change(e)} />
+                                <Input name="password" value={this.state.password} placeholder="Парол" onChange={e => this.change(e)} />
                             </FormItem>
                             <FormItem label="Роли">
                                 <Select name="roleId" size="default" onChange={this.handleSelect2}>
@@ -274,4 +350,4 @@ class Operators extends Component {
     }
 }
 
-export default Operators;
+export default Form.create()(Operators);

@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
+import { getRole } from '../helpers/role';
 import {Row, Col, Input, Icon, Button, Form, notification} from "antd";
 const FormItem = Form.Item;
 
@@ -40,7 +41,7 @@ class Login extends Component {
             },
             {headers: {"Content-Type": "application/json"}}
         ).then(function(res){
-            console.log(res.data.role);
+            // console.log(res.data.role);
             localStorage.setItem(
                 'token',
                res.data.token
@@ -49,10 +50,11 @@ class Login extends Component {
                 'role',
                 res.data.role
             )
-            if(res.data.role == 'superadmin') {
+            console.log(getRole());
+            if(getRole().trim() === 'superadmin') {
                 console.log('I am inside');
-                that.props.push('/admin');
-            } else if(res.data.role === 'operator') {
+                that.props.history.push('/admin');
+            } else if(getRole() === 'operator') {
                 that.props.history.push('/info');
             }
             // console.log(res.data);

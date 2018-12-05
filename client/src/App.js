@@ -11,9 +11,9 @@ import AdminLanding from './components/admin/AdminLanding';
 import Department from './components/admin/Department';
 import Operators from './components/admin/Operators';
 import Transactions from './components/admin/Transactions';
-import RoleAuthenticated from './components/RoleAuthenticated';
-// import  RoleAuthenticated  from './components/RoleAuthenticated';
-// import { getRole } from './helpers/role';
+import Settings from './components/admin/Settings';
+import Print from './components/operator/Print';
+import OperatorTransactions from './components/operator/Transactions';
 class App extends Component {
 
   render() {
@@ -22,19 +22,19 @@ class App extends Component {
         <Switch>
           <Route path="/login" component={Login}/>
           <Route path="/" exact component={Home} />
-          {/* <AuthenticatedComponent> */}
-            <RoleAuthenticated>
-              <Route path="/department" component={Department} />
-              <Route path="/admin" component={AdminLanding} />
-              <Route path="/operators" component={Operators} />
-              <Route path="/transactions" component={Transactions} />
-            </RoleAuthenticated>
+          <Route path="/print/secretCode" component={Print}/>
+          <AuthenticatedComponent>
+            <Route path="/operators" component={Operators} />
+            <Route path="/department" component={Department} />
+            <Route path="/admin" component={AdminLanding} />
+            <Route path="/transactions" component={Transactions} />
+            <Route path="/settings" component={Settings} />
             <Route path="/info" component={Landing}/>
             <Route path="/send" component={SiderDemo} />
             <Route path="/receive" component={ReceivePayment} />
             <Route path="/search" component={SearchTransaction}/>
-          {/* </AuthenticatedComponent> */}
-          
+            <Route path="/myTransactions" component={OperatorTransactions} />
+          </AuthenticatedComponent>
         </Switch>
       </BrowserRouter>
     );

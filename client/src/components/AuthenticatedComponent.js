@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {getJwt} from "../helpers/jwt";
-// import { getRole } from '../helpers/role';
+import { getRole } from '../helpers/role';
 import axios from 'axios';
 import {withRouter} from 'react-router-dom';
 
@@ -25,7 +25,10 @@ class AuthenticatedComponent extends Component {
                 user: user.data
                 // role: user.data.role
             });
-            // this.props.history.push('/info');
+            if(getRole() === 'superadmin') {
+                this.props.history.push('/admin')
+            } else if(getRole() === 'operator')
+            this.props.history.push('/info');
            
         }).catch(err => {
             localStorage.removeItem('token');

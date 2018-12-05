@@ -23,6 +23,7 @@ class Header extends Component {
             }
         }).then(res => {
             this.setState({
+                id: res.data.result[0].id,
                 name: res.data.result[0].firstName
             });
             console.log(this.state.name);

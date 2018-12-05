@@ -10,7 +10,8 @@ import {
   Col,
   DatePicker,
   Button,
-  Modal
+  Modal,
+  message
 } from 'antd';
 
 import DefaultLayout from '../layout/Default';
@@ -28,7 +29,9 @@ class PaymentSend extends Component {
       collapsed: false,
       confirmDirty: false,
       send_department: undefined,
-      sender_fullname: "",
+      operator_id: undefined,
+      operator_name: undefined,
+      sender_fullname: undefined,
       sender_passport_series: undefined,
       sender_passport_number: undefined,
       sender_passport_date_of_issue: moment(),
@@ -56,6 +59,7 @@ class PaymentSend extends Component {
     this.handleSelect2 = this.handleSelect2.bind(this);
     this.showModal = this.showModal.bind(this);
     this.hideModal = this.hideModal.bind(this);
+    // this.handleOk2 = this.handleOk2.bind(this);
   }
 
 
@@ -66,6 +70,8 @@ class PaymentSend extends Component {
       }
     }).then(res => {
       this.setState({
+        operator_id: res.data.result[0].id,
+        operator_name: `${res.data.result[0].firstName} ${res.data.result[0].lastName} ${res.data.result[0].middleName}`,
         send_department: res.data.result[0].Branch.MFO
       });
     });
@@ -100,7 +106,8 @@ class PaymentSend extends Component {
 
 
   handleOk = () => {
-    if (this.state.send_department &&
+    if (
+      this.state.send_department &&
       this.state.sender_fullname &&
       this.state.sender_passport_series &&
       this.state.sender_passport_number &&
@@ -115,11 +122,9 @@ class PaymentSend extends Component {
       this.state.send_currency_type &&
       this.state.send_payment_method
     ) {
-      this.setState({
-        confirmLoading: true
-      });
-      
       let formData = {};
+      formData.send_operator = this.state.operator_id;
+      // formData.operator_name = this.state.operator_name;
       formData.send_department = this.state.send_department;
       formData.sender_fullname = this.state.sender_fullname;
       formData.sender_passport_series = this.state.sender_passport_series;
@@ -136,29 +141,30 @@ class PaymentSend extends Component {
       formData.send_amount_in_word = this.state.send_amount_in_word;
       formData.status = this.state.status;
       console.log(formData);
-
-      axios.post('/api/createTransaction', formData, {
+      this.props.state = formData;
+      axios.post('/api/createtransaction', formData, {
         headers: {
           Authorization: getJwt()
         }
       }).then(res => {
         console.log(res.data);
         if(res.data.success) {
-          // message.success(res.data.message);
+          message.success(res.data.message);
           this.setState({
             secretCode: res.data.secretCode
           })
           Modal.confirm({
-            title: 'Transaction',
-            content: ' You want to accept transaction',
+            title: 'Отказма',
+            content: ' Отказма амалга оширилсинми',
             onOk() {
               Modal.success({
                 title: "Success",
-                content: res.data.secretCode
+                content: res.data.secretCode,
+                
               })
             },
-            okText: 'Confirm',
-            cancelText: 'Cancel',
+            okText: 'Амалга ошириш',
+            cancelText: 'Бекор килиш',
           });
         }
       });
@@ -170,6 +176,7 @@ class PaymentSend extends Component {
       
     }
   }
+
 
   onCollapse = (collapsed) => {
     console.log(collapsed);
@@ -224,8 +231,9 @@ class PaymentSend extends Component {
       visible: false
     })
   }
+  
   render() {
-    const { send_currency_types, send_payment_methods } = this.state;
+    const { send_currency_types, send_payment_methods, secretCode } = this.state;
     return (
       <DefaultLayout>
         <Breadcrumb style={{ margin: '16px 0' }}>
@@ -234,23 +242,23 @@ class PaymentSend extends Component {
         </Breadcrumb>
         <div style={{ marginLeft: '50px', background: '#fff' }}>
           <h2>Пул ўтказмасини юбориш</h2>
-          <Form onSubmit={this.handleSubmit} id="form">
+          <Form id="form">
             <Row>
               <Col span={16} >
                 <FormItem label="Ф.И.Ш" hasFeedback validateStatus="success">
-                  <Input size="default" name="sender_fullname" placeholder="Ф.И.Ш" id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.sender_fullname} name="sender_fullname" placeholder="Ф.И.Ш" id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
             </Row>
             <Row gutter={16}>
               <Col className="gutter-row" span={6}>
                 <FormItem label="Паспорт серияси" hasFeedback validateStatus="success">
-                  <Input size="default" name="sender_passport_series" placeholder="Паспорт серияси" id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.sender_passport_series} name="sender_passport_series" placeholder="Паспорт серияси" maxLength="2" id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
               <Col className="gutter-row" span={10}>
                 <FormItem label="Паспорт рақами" hasFeedback validateStatus="success">
-                  <Input size="default" name="sender_passport_number" placeholder="Паспорт рақами" id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.sender_passport_number} name="sender_passport_number" placeholder="Паспорт рақами" maxLength="7" id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
             </Row>
@@ -262,26 +270,26 @@ class PaymentSend extends Component {
               </Col>
               <Col className="gutter-row" span={8}>
                 <FormItem label="Амал қилиш муддати" hasFeedback validateStatus="success">
-                  <DatePicker size="default" name="sender_passport_date_of_expiry" placeholder="Амал қилиш муддати" style={{ width: '100%' }} onChange={e => this.handleChange2(e)} />
+                  <DatePicker size="default"  name="sender_passport_date_of_expiry" placeholder="Амал қилиш муддати" style={{ width: '100%' }} onChange={e => this.handleChange2(e)} />
                 </FormItem>
               </Col>
             </Row>
             <Row gutter={16}>
               <Col span={8} >
                 <FormItem label="Паспорт берилган жойи" hasFeedback validateStatus="success">
-                  <Input size="default" name="sender_passport_place_of_given" placeholder="Паспорт берилган жойи" id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.sender_passport_place_of_given} name="sender_passport_place_of_given" placeholder="Паспорт берилган жойи" id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
               <Col span={8} >
                 <FormItem label="Тел. номер" hasFeedback validateStatus="success">
-                  <Input size="default" name="sender_phone_number" placeholder="Тел. номер  " id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.sender_phone_number} name="sender_phone_number" placeholder="Тел. номер  " id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
             </Row>
             <Row gutter={16}>
               <Col span={16} >
                 <FormItem label="Манзил" hasFeedback validateStatus="success">
-                  <Input size="default" name="sender_permanent_address" placeholder="Манзил" id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.sender_permanent_address} name="sender_permanent_address" placeholder="Манзил" id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
 
@@ -289,7 +297,7 @@ class PaymentSend extends Component {
             <Row gutter={16}>
               <Col span={16} >
                 <FormItem label="Ҳисобварақ рақами " hasFeedback validateStatus="success">
-                  <Input size="default" name="sender_account_number" placeholder="Ҳисобварақ рақами " id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.sender_account_number} name="sender_account_number" placeholder="Ҳисобварақ рақами " id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
             </Row>
@@ -315,12 +323,12 @@ class PaymentSend extends Component {
             <Row gutter={16}>
               <Col className="gutter-row" span={8}>
                 <FormItem label="Пул ўтказмасининг миқдори сонда" hasFeedback validateStatus="success">
-                  <Input size="default" name="send_amount_in_number" placeholder="Пул ўтказмасининг миқдори сонда" id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.send_amount_in_number} name="send_amount_in_number" placeholder="Пул ўтказмасининг миқдори сонда" id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
               <Col className="gutter-row" span={8}>
                 <FormItem label="Пул ўтказмасининг миқдори сўз билан" hasFeedback validateStatus="success">
-                  <Input size="default" name="send_amount_in_word" placeholder="Пул ўтказмасининг миқдори сўз билан" id="success" onChange={e => this.change(e)} />
+                  <Input size="default" value={this.state.send_amount_in_word} name="send_amount_in_word" placeholder="Пул ўтказмасининг миқдори сўз билан" id="success" onChange={e => this.change(e)} />
                 </FormItem>
               </Col>
             </Row>
@@ -329,7 +337,9 @@ class PaymentSend extends Component {
                 <Button type="primary" onClick={this.handleOk} size="large" style={{ float: 'right' }}>Маълумотларни сақлаш</Button>
               </Col>
               <Col className="gutter-row" span={8}>
-                <Button type="submit" size="default" style={{ float: 'right' }}>Чоп этиш</Button>
+                <a target="_blank" href={"/print/" + {secretCode}}>
+                Print
+                </a>
               </Col>
             </Row>
           </Form>
@@ -337,6 +347,7 @@ class PaymentSend extends Component {
       </DefaultLayout>
     );
   }
+  
 }
 
 export default Form.create()(PaymentSend);

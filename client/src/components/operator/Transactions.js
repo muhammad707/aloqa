@@ -1,16 +1,17 @@
 import React, { Component } from 'react';
-import AdminLayout from '../layout/AdminLayout';
+import AdminLayout from '../layout/Default';
 import { Breadcrumb,  Button, Table, Icon, Modal, Form, Input, Row, Col } from 'antd';
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
 import Column from 'antd/lib/table/Column';
 const FormItem = Form.Item;
 
-class Transactions extends Component {
+class OperatorTransactions extends Component {
     constructor(props) {
         super(props);
         this.state = {
             transactions: undefined,
+            operator: undefined,
             visible: false,
             transactions2: undefined
         }
@@ -19,8 +20,13 @@ class Transactions extends Component {
         this.onView = this.onView.bind(this);
     }
 
-    componentDidMount() {
+    componentWillMount() {
+        // this.fetchOperator();
         this.fetchTransactions();
+    }
+
+    fetchOperator() {
+        
     }
     showModal = () => {
         this.setState({
@@ -75,17 +81,24 @@ class Transactions extends Component {
     }
 
     fetchTransactions() {
-        axios.get('/admin/transactions', {
+        
+        axios.get('/send', {
             headers: {
                 Authorization: getJwt()
             }
-        }).then(transactions => {
-            console.log(transactions.data);
-            this.setState({
-                transactions2: transactions.data
-            });
-            const listItems = (
-                <Table rowKey="transaction" dataSource={transactions.data}>
+        }).then(res => {
+            var operator = res.data.result[0].id;
+            axios.get('/api/transactions/' + operator, {
+                headers: {
+                    Authorization: getJwt()
+                }
+            }).then(res => {
+                console.log(res.data);
+                this.setState({
+                    transactions2: res.data
+                });
+                const listItems = (
+                    <Table rowKey="transaction" dataSource={res.data}>
                     <Column 
                          title="Тартиб раками"
                          key="transaction"
@@ -124,11 +137,27 @@ class Transactions extends Component {
                         )} />
                     
                 </Table>
-            );
-            this.setState({
-                transactions: listItems
+                );
+                this.setState({
+                    transactions: listItems
+                })
             })
         })
+
+
+        // console.log(this.state.operator);
+        // axios.get('/api/transactions/14' , {
+        //     headers: {
+        //         Authorization: getJwt()
+        //     }
+        // }).then(transactions => {
+        //     console.log(transactions.data);
+           
+            // const listItems = (
+                
+            // );
+            
+        // })
     }
 
     render() {
@@ -227,28 +256,32 @@ class Transactions extends Component {
                                 </FormItem>
                         </Col>
                         <Col className="gutter-row" span={8}>
-                            <FormItem  label="Тартиб раками">
-                                <Input name="" value={this.state.transactions_id}  disabled/>
-                            </FormItem>
-                            <FormItem  label="Качон юборилган">
-                                <Input name="receiver_fullname" value={this.state.createdAt} placeholder="Ф.И.Ш" disabled/>
-                            </FormItem>
-                            <FormItem label="Юборилган филиал">
-                                <Input value={this.state.send_department} placeholder="Пасспорт маьлумотлари" disabled/>
-                            </FormItem>
-                            <FormItem label="Кабул килган филиал">
-                                <Input value={this.state.receive_department} placeholder="Пул микдори" disabled/>
-                            </FormItem>
-                            <FormItem  label="Статус">
-                                <Input value={this.state.status} placeholder="Пул бирлиги" disabled/>
-                            </FormItem>
+                                <FormItem  label="Тартиб раками">
+                                    <Input name="" value={this.state.transactions_id}  disabled/>
+                                </FormItem>
+                                <FormItem  label="Качон юборилган">
+                                    <Input name="receiver_fullname" value={this.state.createdAt} placeholder="Ф.И.Ш" disabled/>
+                                </FormItem>
+                                <FormItem label="Юборилган филиал">
+                                    <Input value={this.state.send_department} placeholder="Пасспорт маьлумотлари" disabled/>
+                                </FormItem>
+                                <FormItem label="Кабул килган филиал">
+                                    <Input value={this.state.receive_department} placeholder="Пул микдори" disabled/>
+                                </FormItem>
+                                <FormItem  label="Статус">
+                                    <Input value={this.state.status} placeholder="Пул бирлиги" disabled/>
+                                </FormItem>
+                                <FormItem {...this.formItemLayout} label="Статус">
+                                    <Input value={this.state.status} disabled/>
+                                </FormItem>
+
                         </Col>
                        </Row>
                     </Modal>
-
+                
             </AdminLayout>
         );
     }
 }
 
-export default Transactions;
+export default OperatorTransactions;

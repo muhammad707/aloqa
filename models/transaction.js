@@ -120,6 +120,12 @@ module.exports = (sequelize, Sequelize) => {
         Transactions.belongsTo(models.TransactionStatus, {
             foreignKey: 'status'
         });
+        Transactions.belongsTo(models.User, {
+            foreignKey: 'send_operator'
+        });
+        Transactions.belongsTo(models.User, {
+            foreignKey: 'receive_operator'
+        });
     }
     return Transactions;
 }

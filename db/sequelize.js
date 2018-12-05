@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize'); // sequelize library
-
+const keys = require('../config/config');
 // Connection ... 
-const sequelize = new Sequelize('aloqa_test', 'postgres', 'inha707', {
+const sequelize = new Sequelize(keys.database_name, keys.database_user, keys.database_password, {
     host: 'localhost',
     dialect: 'postgres',
     operatorsAliases: false

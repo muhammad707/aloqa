@@ -43,7 +43,7 @@ exports.postLogin = (req, res) => {
                     role: payload.role
                 });
             }
-        )
+        );
     });
 }
 
@@ -70,7 +70,7 @@ exports.paymentMethodList = (req, res) => {
 exports.createTransaction = (req, res) => {
 
     var body = _.pick(req.body, [
-
+        'send_operator',
         'send_department', 
         'sender_fullname',
         'sender_passport_series',
@@ -103,7 +103,7 @@ exports.createTransaction = (req, res) => {
 exports.confirmTransaction = (req, res) => {
 
     var body = _.pick(req.body, [
-
+        'receive_operator',
         'receive_department', 
         'receiver_fullname',
         'receiver_passport_series',
@@ -162,14 +162,88 @@ exports.searchTransaction = (req, res) => {
         const array = Object.values(obj);
         res.send({
             array,
-            result,
             message: "Transaction is found",
             success: true
         })
     }).catch(e => {
         console.log("Transaction not found");
         res.send({
-            success: false
+            success: false,
+            message: "Утказма топилмади"
         })
     });
+}
+
+exports.getInfoToPrint = (req, res) => {
+    models.Transaction.findAll({
+        attributes: ['sender_fullname', 'sender_passport_series', 'sender_passport_number', 'sender_passport_date_of_issue', 'sender_passport_date_of_expiry', 'sender_account_number', 'send_amount_in_number'],
+        where: {
+            secretCode: req.params.secretCode
+        }
+    }).then(result => {
+        res.send({
+            result: result,
+            message: "Ариза"
+        })
+    });
+}
+
+exports.sentTransactions = (req, res) => {
+    models.Transaction.findAll({
+        include: [{
+            model: models.TransactionStatus
+        }, {
+            model: models.PaymentMethod
+        }, {
+            model: models.Currency
+        }, {
+            model: models.Currency,
+            as: 'reciveCurrency'
+        }, {
+            model: models.PaymentMethod,
+            as: 'receiveMethod'
+        }],
+        where: {
+            send_operator: req.params.operator
+        }
+    }).then(transactions => {
+        result = [];
+        for(transaction of transactions) {
+            data = {};
+            data.transaction = ( transaction.id != null ?  transaction.id : "");
+            data.send_department = (transaction.send_department != null ? transaction.send_department : "");
+            data.sender_fullname = (transaction.sender_fullname != null ?  transaction.sender_fullname : "");
+            data.sender_passport_info = ((transaction.sender_passport_series != null && transaction.sender_passport_number != null) ? `${transaction.sender_passport_series} ${transaction.sender_passport_number}` : ""); 
+            data.sender_passport_date_of_issue = (transaction.sender_passport_date_of_issue != null ? transaction.sender_passport_date_of_issue : "");
+            data.sender_passport_date_of_expiry = (transaction.sender_passport_date_of_expiry != null ? transaction.sender_passport_date_of_expiry : "");
+            data.sender_passport_place_of_given = (transaction.sender_passport_place_of_given != null ? transaction.sender_passport_place_of_given : "");
+            data.sender_permanent_address = (transaction.sender_permanent_address != null ? transaction.sender_permanent_address : "");
+            data.sender_phone_number = (transaction.sender_phone_number != null ? transaction.sender_phone_number : "");
+            data.sender_account_number = (transaction.sender_account_number != null ? transaction.sender_account_number : "");
+            data.send_amount_in_number = (transaction.send_amount_in_number != null ? transaction.send_amount_in_number : "");
+            data.send_amount_in_word = (transaction.send_amount_in_word != null ? transaction.send_amount_in_word: "");
+            data.receive_department = (transaction.receive_department != null ? transaction.receive_department : "");
+            data.receiver_fullname = (transaction.receiver_fullname != null ? transaction.receiver_fullname : "");
+            data.receiver_passport_info = ((transaction.receiver_passport_series != null && transaction.receiver_passport_number != null) ? `${transaction.receiver_passport_series} ${transaction.receiver_passport_number}` : "") 
+            data.receiver_passport_date_of_issue = (transaction.receiver_passport_date_of_issue != null ? transaction.receiver_passport_date_of_issue : "");
+            data.receiver_passport_date_of_expiry = (transaction.receiver_passport_date_of_expiry != null ? transaction.receiver_passport_date_of_expiry : "");
+            data.receiver_passport_place_of_given = (transaction.receiver_passport_place_of_given != null ? transaction.receiver_passport_place_of_given : "");
+            data.receiver_permanent_address = (transaction.receiver_permanent_address != null ? transaction.receiver_permanent_address : "");
+            data.receiver_phone_number = (transaction.receiver_phone_number != null ? transaction.receiver_phone_number : "");
+            data.receiver_account_number = (transaction.receiver_account_number != null ? transaction.receiver_account_number : "");
+            data.createdAt = (transaction.createdAt != null ? transaction.createdAt : "");
+            data.status_id = (transaction.Status.id != null ? transaction.Status.id : "");
+            data.status = (transaction.Status.status != null ? transaction.Status.status : "");
+            data.send_paymentMethod_id = (transaction.Payment.id != null ? transaction.Payment.id : "");
+            data.send_paymentMethod = (transaction.Payment.name != null ? transaction.Payment.name : "");
+            // data.receive_paymentMethod_id = (transaction.receiveMethod.id != null ? transaction.receiveMethod.id : "");
+            data.receive_paymentMethod = (transaction.receiveMethod != null ? transaction.receiveMethod.name : "");
+            data.send_currency_id = (transaction.Currency.id != null ? transaction.Currency.id : "");
+            data.send_currency = (transaction.Currency.name != null ? transaction.Currency.name : "");
+            // data.receive_currency_id = (transaction.reciveCurrency.id != null ? transaction.reciveCurrency.id : "");
+            data.receive_currency = (transaction.reciveCurrency != null ? transaction.reciveCurrency.name : "");
+            result.push(data);
+        }
+        res.send(result);
+    })
 }

@@ -40,8 +40,7 @@ class AdminSidebar extends Component {
             </Menu.Item>
 
             <Menu.Item key="/department">
-              <NavLink to="/depart
-              ment">
+              <NavLink to="/department">
                 <Icon type="shop" />
                 <span className="nav-text">Филиаллар</span>
               </NavLink>
@@ -60,10 +59,16 @@ class AdminSidebar extends Component {
                 <span className="nav-text">Отказмалар</span>
               </NavLink>
             </Menu.Item>
+            <Menu.Item key="/settings">
+              <NavLink to="/settings">
+                <Icon type="setting" />
+                <span className="nav-text">Созламалар</span>
+              </NavLink>
+            </Menu.Item>
 
             <Menu.Item key="logout">  
             <Icon type="logout" />              
-                <span className="nav-text" onClick={e=>this.logout()}>Logout</span>
+                <span className="nav-text" onClick={e=>this.logout()}>Чикиш</span>
             </Menu.Item>
 
           </Menu>

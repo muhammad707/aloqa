@@ -6,6 +6,7 @@ const models  = require('./models');
 const PORT = process.env.PORT || 8080; // PORT
 
 
+
 // Connection to database
 models.sequelize.sync().then(() => {
     server.listen(PORT, () => {

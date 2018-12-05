@@ -20,6 +20,8 @@ class Landing extends Component {
                 Authorization: getJwt()
             }
         }).then(res => {
+            console.log(res.data.result[0].id);
+            // this.props.onChange(res.data.result[0].id);
             this.setState({
                 firstName: res.data.result[0].firstName,
                 lastName: res.data.result[0].lastName,
@@ -28,7 +30,7 @@ class Landing extends Component {
                 MFO: res.data.result[0].Branch.MFO
             });
         });
-        console.log(this.state.branch);
+        // console.log(this.state.branch);
     }
 
     render() {
