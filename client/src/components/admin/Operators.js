@@ -4,6 +4,7 @@ import { Breadcrumb, Divider, Popconfirm, Select,  Button, Table,notification, I
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
 import Column from 'antd/lib/table/Column';
+import '../../App.css';
 const Option = Select.Option;
 const FormItem = Form.Item;
 
@@ -26,9 +27,13 @@ class Operators extends Component {
             roleId: undefined,
             username: undefined,
             password: undefined,
+            status: "1",
             modalText: "Оператор кошиш",
             url: "add",
-            id: undefined
+            id: undefined, 
+            searchName: '',
+            searchLogin: '',
+            searchMFO: ''
 
         }
         // this.handleAdd = this.handleAdd.bind(this);
@@ -38,7 +43,7 @@ class Operators extends Component {
         this.handleSelect2 = this.handleSelect2.bind(this);
         this.handleOk = this.handleOk.bind(this);
         this.onEdit = this.onEdit.bind(this);
-        this.onDelete = this.onDelete.bind(this);
+        // this.onDelete = this.onDelete.bind(this);
     }
 
     componentDidMount(){
@@ -77,29 +82,59 @@ class Operators extends Component {
         });
     }
 
-    onDelete(id) {
-        axios.get('/admin/operators/delete/' + id, {
-            headers: {
-                Authorization: getJwt()
-            }
-        }).then(res => {
-            console.log(res.data);
-            if(res.data.success) {
-                notification['success']({
-                    message:  res.data.message
-                });
-                this.fetchOperators();
-            } else {
-                notification['error']({
-                    message:  res.data.message
-                });
-            }
-        }).catch(err => {
-            notification['error']({
-                message: "Хатолик"
-            });
-        })
+    handleSearchName = (selectedKeys, confirm) => () => {
+        confirm();
+        this.setState({ searchName: selectedKeys[0] });
+      }
+
+    handleResetName = clearFilters => () => {
+        clearFilters();
+        this.setState({ searchName: '' });
+      }
+
+    handleSearchLogin = (selectedKeys, confirm) => () => {
+    confirm();
+    this.setState({ searchLogin: selectedKeys[0] });
     }
+
+    handleResetLogin = clearFilters => () => {
+        clearFilters();
+        this.setState({ searchLogin: '' });
+    }
+
+    handleSearchMFO = (selectedKeys, confirm) => () => {
+        confirm();
+        this.setState({ searchMFO: selectedKeys[0] });
+        }
+    
+        handleResetMFO = clearFilters => () => {
+            clearFilters();
+            this.setState({ searchMFO: '' });
+        }
+
+    // onDelete(id) {
+    //     axios.get('/admin/operators/delete/' + id, {
+    //         headers: {
+    //             Authorization: getJwt()
+    //         }
+    //     }).then(res => {
+    //         console.log(res.data);
+    //         if(res.data.success) {
+    //             notification['success']({
+    //                 message:  res.data.message
+    //             });
+    //             this.fetchOperators();
+    //         } else {
+    //             notification['error']({
+    //                 message:  res.data.message
+    //             });
+    //         }
+    //     }).catch(err => {
+    //         notification['error']({
+    //             message: "Хатолик"
+    //         });
+    //     })
+    // }
 
     onEdit(data) {
         console.log(data);
@@ -131,20 +166,80 @@ class Operators extends Component {
                 <Table rowKey="operator_id" dataSource={list.data}>
                     <Column 
                         title="Исм" 
-                        key="firstName"
-                        dataIndex="firstName" />
-                    <Column 
-                        title="Фамилия" 
-                        key="lastName"
-                        dataIndex="lastName" />
-                    <Column 
-                        title="Отасининг исми" 
-                        key="middleName"
-                        dataIndex="middleName" />
+                        key="fullName"
+                        dataIndex="fullName"
+                        filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
+                            <div className="custom-filter-dropdown">
+                                <Input
+                                    ref={ele => this.searchInput = ele}
+                                    placeholder="Ф.И.Ш бўйича қидириш"
+                                    value={selectedKeys[0]}
+                                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                                    onPressEnter={this.handleSearchName(selectedKeys, confirm)}
+                                />
+                                <Button type="primary" onClick={this.handleSearchName(selectedKeys, confirm)}>Поиск</Button>
+                                <Button onClick={this.handleResetName(clearFilters)}>Сброс</Button>
+                            </div>
+                        )}
+                        filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
+                        onFilter={(value, record) => record.fullName ? record.fullName.toLowerCase().includes(value.toLowerCase()) : record.fullName}
+                        onFilterDropdownVisibleChange={(visible) => {
+                            if (visible) {
+                                setTimeout(() => {
+                                    this.searchInput.focus();
+                                });
+                            }
+                        }}
+                        render = {(fullName) => {
+                            const {searchName} = this.state;
+                            console.log(fullName);
+                            return searchName ? (
+                                <span>
+                                    {fullName.split(new RegExp(`(${searchName})`, 'gi')).map((fragment, i) => (
+                                    fragment.toLowerCase() === searchName.toLowerCase()
+                                        ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
+                                    ))}
+                                </span>
+                            ): fullName;
+                        }} />
                     <Column 
                         title="МФО" 
                         key="MFO"
-                        dataIndex="MFO" />
+                        dataIndex="MFO"
+                        filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
+                            <div className="custom-filter-dropdown">
+                                <Input
+                                    ref={ele => this.searchInput = ele}
+                                    placeholder="МФО бўйича қидириш"
+                                    value={selectedKeys[0]}
+                                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                                    onPressEnter={this.handleSearchMFO(selectedKeys, confirm)}
+                                />
+                                <Button type="primary" onClick={this.handleSearchMFO(selectedKeys, confirm)}>Поиск</Button>
+                                <Button onClick={this.handleResetMFO(clearFilters)}>Сброс</Button>
+                            </div>
+                        )}
+                        filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
+                        onFilter={(value, record) => record.MFO ? record.MFO.toLowerCase().includes(value.toLowerCase()) : record.MFO}
+                        onFilterDropdownVisibleChange={(visible) => {
+                            if (visible) {
+                                setTimeout(() => {
+                                    this.searchInput.focus();
+                                });
+                            }
+                        }} 
+                        render = {(MFO) => {
+                            const {searchMFO} = this.state;
+                            console.log(MFO);
+                            return MFO ? (
+                                <span>
+                                    {MFO.split(new RegExp(`(${searchMFO})`, 'gi')).map((fragment, i) => (
+                                    fragment.toLowerCase() === searchMFO.toLowerCase()
+                                        ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
+                                    ))}
+                                </span>
+                            ): MFO;
+                        }} />
                     <Column 
                         title="Филиал номи"
                         key="Branch"
@@ -152,14 +247,48 @@ class Operators extends Component {
                     <Column 
                         title="Логин" 
                         key="username"
-                        dataIndex="username" />
+                        dataIndex="username"
+                        filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
+                            <div className="custom-filter-dropdown">
+                                <Input
+                                    ref={ele => this.searchInput = ele}
+                                    placeholder="Логин бўйича қидириш"
+                                    value={selectedKeys[0]}
+                                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                                    onPressEnter={this.handleSearchLogin(selectedKeys, confirm)}
+                                />
+                                <Button type="primary" onClick={this.handleSearchLogin(selectedKeys, confirm)}>Поиск</Button>
+                                <Button onClick={this.handleResetLogin(clearFilters)}>Сброс</Button>
+                            </div>
+                        )}
+                        filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
+                        onFilter={(value, record) => record.username ? record.username.toLowerCase().includes(value.toLowerCase()) : record.username}
+                        onFilterDropdownVisibleChange={(visible) => {
+                            if (visible) {
+                                setTimeout(() => {
+                                    this.searchInput.focus();
+                                });
+                            }
+                        }} 
+                        render = {(username) => {
+                            const {searchLogin} = this.state;
+                            console.log(username);
+                            return searchLogin ? (
+                                <span>
+                                    {username.split(new RegExp(`(${searchLogin})`, 'gi')).map((fragment, i) => (
+                                    fragment.toLowerCase() === searchLogin.toLowerCase()
+                                        ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
+                                    ))}
+                                </span>
+                            ): username;
+                        }}/>
                     <Column 
                         title="Бошкариш" 
                         key="action"
                         render={(text, record) => (
                             <div>
                                 <Icon type="edit" onClick={() => this.onEdit(record)}/>
-                                <Divider type="vertical"/>
+                                {/* <Divider type="vertical"/>
                                 <Popconfirm
                                     title=" Учирилсинми ?"
                                     onConfirm={() => {
@@ -168,7 +297,7 @@ class Operators extends Component {
                                     okText="Да"
                                     cancelText="Нет">
                                     <Icon type="delete"/>
-                                </Popconfirm>
+                                </Popconfirm> */}
                             </div>
                         )} /> 
                 </Table>
@@ -194,9 +323,10 @@ class Operators extends Component {
                 Authorization: getJwt()
             }
         }).then(list => {
-            const data = list.data.departments.map(department => ({
-                id: department.id,
-                value: department.department
+            const data = list.data.result.map(department => ({
+                id: department.department_id,
+                value: department.department,
+                status: department.status
             }));
             this.setState({
                 departments: data
@@ -253,6 +383,7 @@ class Operators extends Component {
             formData.roleId = this.state.roleId;
             formData.username = this.state.username;
             formData.password = this.state.password;
+            formData.status = this.state.status;
             console.log(formData);
             
             axios.post('/admin/operators/' + this.state.url, formData, {

@@ -36,6 +36,7 @@ exports.postLogin = (req, res) => {
         jwt.sign(
             payload,
             'abc123',
+            { expiresIn: 3600 },
             (err, token, user) => {
                 res.send({
                     token: "Bearer " +  token, 
@@ -85,12 +86,13 @@ exports.createTransaction = (req, res) => {
         'send_amount_in_word',
         'send_payment_method',
         'send_currency_type', 
-        'status'
+        'status',
+        'bank_profit'
     ]);
     console.log(body);
     models.Transaction.create(body).then(result => {
         res.status(200).send({
-            message: "Transaction created",
+            message: "Ўтказма яратилди",
             success: true,
             transaction_id: result.id,
             secretCode: result.secretCode
@@ -133,7 +135,7 @@ exports.confirmTransaction = (req, res) => {
 
 exports.searchTransaction = (req, res) => {
     models.Transaction.findAll({
-        attributes: ['id','secretCode','sender_fullname', 'sender_passport_series', 'sender_passport_number', 'send_currency_type', 'send_amount_in_number', 'createdAt', 'status'],
+        attributes: ['id','secretCode','sender_fullname', 'sender_account_number', 'sender_permanent_address', 'sender_passport_series', 'sender_passport_number', 'send_payment_method', 'send_currency_type', 'send_amount_in_number', 'sender_phone_number', 'send_amount_in_word', 'createdAt', 'status'],
         include: [{
             model: models.Currency,
             attributes: ['id', 'name'],
@@ -142,6 +144,9 @@ exports.searchTransaction = (req, res) => {
             model: models.TransactionStatus,
             attributes: ['id', 'status'],
             // as: 'send'
+        }, {
+            model: models.Payment,
+            attributes:['id', 'name']
         }],
         where: {
             secretCode: req.body.secretCode
@@ -154,7 +159,11 @@ exports.searchTransaction = (req, res) => {
             sender_fullname: result[0].sender_fullname,
             sender_passport_info: `${result[0].sender_passport_series} ${result[0].sender_passport_number}`,
             amount: result[0].send_amount_in_number,
+            paymentMethod: result[0].Payment.name,
             currency: result[0].Currency.name,
+            phone_number: result[0].sender_phone_number,
+            address: result[0].sender_permanent_address,
+            account_number: result[0].sender_account_number,
             createdAt: result[0].createdAt,
             status: result[0].Status.status
         }
@@ -162,14 +171,12 @@ exports.searchTransaction = (req, res) => {
         const array = Object.values(obj);
         res.send({
             array,
-            message: "Transaction is found",
+            message: "Пул ўтказмаси топилди",
             success: true
         })
     }).catch(e => {
-        console.log("Transaction not found");
         res.send({
-            success: false,
-            message: "Утказма топилмади"
+            message: "Ўтказма мавжуд эмас"
         })
     });
 }
@@ -245,5 +252,60 @@ exports.sentTransactions = (req, res) => {
             result.push(data);
         }
         res.send(result);
+    })
+}
+
+exports.createTransactionByAloqaMobile = (req, res) => {
+    var body = _.pick(req.body, ['sender_firstName', 'send_amount_in_number', 'sender_lastName', 'sender_middleName', 'sender_cardNumber', 'status']);
+
+    console.log(body);
+    models.AloqaMobileTransactions.create(body).then(result => {
+        res.status(200).send({
+            message: "Ўтказма амалга оширилди",
+            transaction_id: result.id,
+            secretCode: result.secretCode,
+            sender_fullName: `${result.sender_lastName} ${result.sender_firstName} ${result.sender_middleName}`,
+            send_amount:  result.send_amount_in_number,
+            send_cardNumber: result.sender_cardNumber,
+            createdAt: result.createdAt
+        })
+    })
+}
+
+exports.searchTransactionByAloqaMobile = (req, res) => {
+    models.AloqaMobileTransactions.findOne({
+        attributes: [
+            'id',
+            'sender_firstName',
+            'sender_lastName',
+            'sender_middleName',
+            'send_amount_in_number',
+            'sender_cardNumber',
+            'bank_profit',
+            'createdAt'
+        ],
+        include: [{
+            model: models.TransactionStatus,
+            attributes:['status']
+        }],
+        where: {
+            secretCode: req.params.secretCode
+        }
+    }).then(transactions => {
+        var obj = {
+            test: {
+                transaction_id:  transactions.id,
+                sender_fullName: `${transactions.sender_lastName} ${transactions.sender_firstName} ${transactions.sender_middleName}`,
+                send_amount_in_number: transactions.send_amount_in_number,
+                sender_cardNumber: transactions.sender_cardNumber,
+                status: transactions.Status.status,
+                createdAt: transactions.createdAt ,
+                bank_profit: transactions.bank_profit
+            }
+        }
+        var transaction = Object.values(obj)
+        res.send({
+            transaction
+        })
     })
 }

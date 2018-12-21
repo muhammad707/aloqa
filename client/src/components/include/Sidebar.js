@@ -42,26 +42,32 @@ class Sidebar extends Component {
             <Menu.Item key="/send">
               <NavLink to="/send">
                 <Icon type="shop" />
-                <span className="nav-text">ўтказмани юбориш</span>
+                <span className="nav-text">Ўтказмани юбориш</span>
               </NavLink>
             </Menu.Item>
 
              <Menu.Item key="/search">
               <NavLink to="/search">
                 <Icon type="shopping-cart" />
-                <span className="nav-text">Утказмани ишлаш</span>
+                <span className="nav-text">Ўтказмани қабул қилиш</span>
               </NavLink>
             </Menu.Item>
             <Menu.Item key="/myTransactions">
               <NavLink to="/myTransactions">
                 <Icon type="shopping-cart" />
-                <span className="nav-text">Утказмалар</span>
+                <span className="nav-text">Ўтказмалар</span>
+              </NavLink>
+            </Menu.Item>
+            <Menu.Item key="/aloqamobiletransactions">
+              <NavLink to="/aloqamobiletransactions">
+                <Icon type="shopping-cart" />
+                <span className="nav-text">AloqaMobile</span>
               </NavLink>
             </Menu.Item>
 
             <Menu.Item key="logout">  
             <Icon type="logout" />              
-                <span className="nav-text" onClick={e=>this.logout()}>Чикиш</span>
+                <span className="nav-text" onClick={e=>this.logout()}>Чиқиш</span>
             </Menu.Item>
 
           </Menu>

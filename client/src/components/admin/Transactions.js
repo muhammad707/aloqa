@@ -12,7 +12,13 @@ class Transactions extends Component {
         this.state = {
             transactions: undefined,
             visible: false,
-            transactions2: undefined
+            transactions2: undefined,
+            searchSenderByName: '',
+            searchByDepartment: '',
+            searchByReceiverName: '',
+            searchReceiveDepartment: '',
+            filteredInfo: null,
+            sortedInfo: null
         }
         this.handleCancel = this.handleCancel.bind(this);
         this.handleOk = this.handleOk.bind(this);
@@ -28,11 +34,80 @@ class Transactions extends Component {
         });
     }
 
+    handleSearchSenderByName = (selectedKeys, confirm) => () => {
+        confirm();
+        this.setState({ searchSenderByName: selectedKeys[0] });
+    }
+
+    handleResetSenderByName = clearFilters => () => {
+        clearFilters();
+        this.setState({ searchSenderByName: '' });
+    }
+
+    handleSearchSendDepartment = (selectedKeys, confirm) => () => {
+        confirm();
+        this.setState({ searchByDepartment: selectedKeys[0] });
+    }
+
+    handleResetSendDepartment = clearFilters => () => {
+        clearFilters();
+        this.setState({ searchByDepartment: '' });
+    }
+
+    handleSearchByReceiverName = (selectedKeys, confirm) => () => {
+        confirm();
+        this.setState({ searchByReceiverName: selectedKeys[0] });
+    }
+
+    handleResetByReceiverName = clearFilters => () => {
+        clearFilters();
+        this.setState({ searchByReceiverName: '' });
+    }
+
+    handleSearchByReceiveDepartment = (selectedKeys, confirm) => () => {
+        confirm();
+        this.setState({ searchReceiveDepartment: selectedKeys[0] });
+    }
+
+    handleResetByReceiveDepartment = clearFilters => () => {
+        clearFilters();
+        this.setState({ searchReceiveDepartment: '' });
+    }
+
+    setAgeSort = () => {
+        this.setState({
+          sortedInfo: {
+            order: 'descend',
+            columnKey: 'age',
+          },
+        });
+    }
+
+    clearFilters = () => {
+        this.setState({ filteredInfo: null });
+    }
+    
+    clearAll = () => {
+    this.setState({
+        filteredInfo: null,
+        sortedInfo: null,
+        });
+    }
+
+    handleChange = ( filters, sorter) => {
+        // console.log('Various parameters', pagination, filters, sorter);
+        this.setState({
+          filteredInfo: filters,
+          sortedInfo: sorter,
+        });
+    }
+
     onView(data) {
         console.log(data);
         this.setState({
             transactions_id: data.transaction,
             createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
             receiver_passport_info: data.receiver_passport_info,
             receive_currency: data.receive_currency,
             receive_department: data.receive_department,
@@ -59,7 +134,8 @@ class Transactions extends Component {
             sender_passport_place_of_given: data.sender_passport_place_of_given,
             sender_permanent_address: data.sender_permanent_address,
             sender_phone_number: data.sender_phone_number,
-            status: data.status
+            status: data.status,
+            bank_profit: data.bank_profit
         });
         this.showModal();
     }
@@ -82,7 +158,9 @@ class Transactions extends Component {
         }).then(transactions => {
             console.log(transactions.data);
             this.setState({
-                transactions2: transactions.data
+                transactions2: transactions.data,
+                filteredInfo: transactions.data,
+                // sortedInfo: transactions.data
             });
             const listItems = (
                 <Table rowKey="transaction" dataSource={transactions.data}>
@@ -93,27 +171,174 @@ class Transactions extends Component {
                     <Column 
                          title="Юборувчи"
                          key="sender_fullname"
-                         dataIndex="sender_fullname" />
+                         dataIndex="sender_fullname"
+                         filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
+                            <div className="custom-filter-dropdown">
+                                <Input
+                                    ref={ele => this.searchInput = ele}
+                                    placeholder="Ф.И.Ш бўйича қидириш"
+                                    value={selectedKeys[0]}
+                                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                                    onPressEnter={this.handleSearchSenderByName(selectedKeys, confirm)}
+                                />
+                                <Button type="primary" onClick={this.handleSearchSenderByName(selectedKeys, confirm)}>Поиск</Button>
+                                <Button onClick={this.handleResetSenderByName(clearFilters)}>Сброс</Button>
+                            </div>
+                        )}
+                        filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
+                        onFilter={(value, record) => record.sender_fullname ? record.sender_fullname.toLowerCase().includes(value.toLowerCase()) : record.sender_fullname}
+                        onFilterDropdownVisibleChange={(visible) => {
+                            if (visible) {
+                                setTimeout(() => {
+                                    this.searchInput.focus();
+                                });
+                            }
+                        }} 
+                        render = {(fullName) => {
+                            const {searchSenderByName} = this.state;
+                            // console.log(fullName);
+                            return searchSenderByName ? (
+                                <span>
+                                    {fullName.split(new RegExp(`(${searchSenderByName})`, 'gi')).map((fragment, i) => (
+                                    fragment.toLowerCase() === searchSenderByName.toLowerCase()
+                                        ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
+                                    ))}
+                                </span>
+                            ): fullName;
+                        }} />
                     <Column 
                          title="Юборилган филиал"
                          key="send_department"
-                         dataIndex="send_department" />
+                         dataIndex="send_department"
+                         filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
+                            <div className="custom-filter-dropdown">
+                                <Input
+                                    ref={ele => this.searchInput = ele}
+                                    placeholder="Юборилган филиал бўйича қидириш"
+                                    value={selectedKeys[0]}
+                                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                                    onPressEnter={this.handleSearchSendDepartment(selectedKeys, confirm)}
+                                />
+                                <Button type="primary" onClick={this.handleSearchSendDepartment(selectedKeys, confirm)}>Поиск</Button>
+                                <Button onClick={this.handleResetSendDepartment(clearFilters)}>Сброс</Button>
+                            </div>
+                        )}
+                        filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
+                        onFilter={(value, record) => record.send_department ? record.send_department.toLowerCase().includes(value.toLowerCase()) : record.send_department}
+                        onFilterDropdownVisibleChange={(visible) => {
+                            if (visible) {
+                                setTimeout(() => {
+                                    this.searchInput.focus();
+                                });
+                            }
+                        }} 
+                        render = {(fullName) => {
+                            const {searchByDepartment} = this.state;
+                            // console.log(fullName);
+                            return searchByDepartment ? (
+                                <span>
+                                    {fullName.split(new RegExp(`(${searchByDepartment})`, 'gi')).map((fragment, i) => (
+                                    fragment.toLowerCase() === searchByDepartment.toLowerCase()
+                                        ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
+                                    ))}
+                                </span>
+                            ): fullName;
+                        }} />
                     <Column 
                          title="Суммаси"
                          key="send_amount_in_number"
-                         dataIndex="send_amount_in_number" />
+                         dataIndex="send_amount_in_number"
+                        //  defaultSortOrder='descend'
+                         sorter={(a, b) => a.send_amount_in_number - b.send_amount_in_number} />
                     <Column 
                          title="Олувчи"
                          key="receiver_fullname"
-                         dataIndex="receiver_fullname" />
+                         dataIndex="receiver_fullname"
+                         filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
+                            <div className="custom-filter-dropdown">
+                                <Input
+                                    ref={ele => this.searchInput = ele}
+                                    placeholder="Олувчи Ф.И.Ш бўйича қидириш"
+                                    value={selectedKeys[0]}
+                                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                                    onPressEnter={this.handleSearchByReceiverName(selectedKeys, confirm)}
+                                />
+                                <Button type="primary" onClick={this.handleSearchByReceiverName(selectedKeys, confirm)}>Поиск</Button>
+                                <Button onClick={this.handleResetByReceiverName(clearFilters)}>Сброс</Button>
+                            </div>
+                        )}
+                        filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
+                        onFilter={(value, record) => record.receiver_fullname ? record.receiver_fullname.toLowerCase().includes(value.toLowerCase()) : record.receiver_fullname}
+                        onFilterDropdownVisibleChange={(visible) => {
+                            if (visible) {
+                                setTimeout(() => {
+                                    this.searchInput.focus();
+                                });
+                            }
+                        }}
+                        render = {(fullName) => {
+                            const {searchByReceiverName} = this.state;
+                            // console.log(fullName);
+                            return searchByReceiverName ? (
+                                <span>
+                                    {fullName.split(new RegExp(`(${searchByReceiverName})`, 'gi')).map((fragment, i) => (
+                                    fragment.toLowerCase() === searchByReceiverName.toLowerCase()
+                                        ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
+                                    ))}
+                                </span>
+                            ): fullName;
+                        }}  />
                     <Column 
                          title="Пул юборилган филиал"
                          key="receive_department"
-                         dataIndex="receive_department" />
+                         dataIndex="receive_department"
+                         filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
+                            <div className="custom-filter-dropdown">
+                                <Input
+                                    ref={ele => this.searchInput = ele}
+                                    placeholder="Олувчи Ф.И.Ш бўйича қидириш"
+                                    value={selectedKeys[0]}
+                                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                                    onPressEnter={this.handleSearchByReceiveDepartment(selectedKeys, confirm)}
+                                />
+                                <Button type="primary" onClick={this.handleResetByReceiveDepartment(selectedKeys, confirm)}>Поиск</Button>
+                                <Button onClick={this.handleResetByReceiveDepartment(clearFilters)}>Сброс</Button>
+                            </div>
+                        )}
+                        filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
+                        onFilter={(value, record) => record.receive_department ? record.receive_department.toLowerCase().includes(value.toLowerCase()) : record.receive_department}
+                        onFilterDropdownVisibleChange={(visible) => {
+                            if (visible) {
+                                setTimeout(() => {
+                                    this.searchInput.focus();
+                                });
+                            }
+                        }}
+                        render = {(fullName) => {
+                            const {searchReceiveDepartment} = this.state;
+                            // console.log(fullName);
+                            return searchReceiveDepartment ? (
+                                <span>
+                                    {fullName.split(new RegExp(`(${searchReceiveDepartment})`, 'gi')).map((fragment, i) => (
+                                    fragment.toLowerCase() === searchReceiveDepartment.toLowerCase()
+                                        ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
+                                    ))}
+                                </span>
+                            ): fullName;
+                        }} />
                     <Column 
                          title="Статус"
                          key="status"
-                         dataIndex="status" />
+                         dataIndex="status"
+                         filters={[
+                            { text: 'создан', value: 'создан' },
+                            { text: 'оплачен', value: 'оплачен' }
+                         ]}
+                        //  filteredValue={this.state.filteredInfo.status ? this.state.filteredInfo.status : null }
+                        onFilter= {(value, record) => record.status.indexOf(value) === 0}
+                        //  sorter={(a, b) => a.status.length - b.status.length}
+                        //  sortOrder={this.state.sortedInfo.columnKey === 'name' && this.state.sortedInfo.status}
+                         />
                     <Column 
                         title="Батафсил" 
                         key="action"
@@ -131,8 +356,25 @@ class Transactions extends Component {
         })
     }
 
+   
+
     render() {
-        const { visible } = this.state;
+        let { visible, sortedInfo, filteredInfo } = this.state;
+        sortedInfo = sortedInfo || {};
+        filteredInfo = filteredInfo || {};
+        const columns = [{
+            title: 'Status',
+            dataIndex: 'status',
+            key: 'status',
+            filters: [
+                { text: 'оплачен', value: 'оплачен' },
+                { text: 'создан', value: 'создан' },
+              ],
+            filteredValue: filteredInfo.status || null,
+            onFilter: (value, record) => record.status.includes(value),
+            sorter: (a, b) => a.status.length - b.status.length,
+            sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
+        }]
         return(
             <AdminLayout>
                 <Breadcrumb style={{ margin: '16px 0' }}>
@@ -166,13 +408,13 @@ class Transactions extends Component {
                                     <Input value={this.state.passport_info} placeholder="Пасспорт маьлумотлари" disabled/>
                                 </FormItem>
                                 <FormItem  label="Берилган вакти">
-                                    <Input value={this.state.sender_passport_date_of_issue} placeholder="Пул микдори" disabled/>
+                                    <Input value={this.state.sender_passport_date_of_issue} placeholder="Берилган вакти" disabled/>
                                 </FormItem>
                                 <FormItem {...this.formItemLayout} label="Амал килиш муддати">
-                                    <Input value={this.state.sender_passport_date_of_expiry} placeholder="Пул бирлиги" disabled/>
+                                    <Input value={this.state.sender_passport_date_of_expiry} placeholder="Амал килиш муддати" disabled/>
                                 </FormItem>
                                 <FormItem label="Ким томонидан берилган">
-                                    <Input value={this.state.sender_passport_place_of_given} disabled/>
+                                    <Input value={this.state.sender_passport_place_of_given} disabled placeholder="Ким томонидан берилган" />
                                 </FormItem>
                                 <FormItem {...this.formItemLayout} label="Манзили">
                                     <Input value={this.state.sender_permanent_address} disabled/>
@@ -189,6 +431,12 @@ class Transactions extends Component {
                                 <FormItem  label="Юборилган пул бирлиги">
                                     <Input value={this.state.send_currency} disabled/>
                                 </FormItem>
+                                <FormItem  label="Качон юборилган">
+                                <Input name="" value={this.state.createdAt} placeholder="" disabled/>
+                                </FormItem>
+                                <FormItem  label="Юборилган сумма">
+                                <Input name="" value={this.state.send_amount_in_number} placeholder="" disabled/>
+                                </FormItem>
                             </Form>
                         </Col>
                         <Col className="gutter-row" span={8}>
@@ -202,22 +450,22 @@ class Transactions extends Component {
                                     <Input value={this.state.passport_info} placeholder="Пасспорт маьлумотлари" disabled/>
                                 </FormItem>
                                 <FormItem  label="Берилган вакти">
-                                    <Input value={this.state.receiver_passport_date_of_issue} placeholder="Пул микдори" disabled/>
+                                    <Input value={this.state.receiver_passport_date_of_issue} placeholder="Берилган вакти" disabled/>
                                 </FormItem>
                                 <FormItem label="Амал килиш муддати">
-                                    <Input value={this.state.receiver_passport_date_of_expiry} placeholder="Пул бирлиги" disabled/>
+                                    <Input value={this.state.receiver_passport_date_of_expiry} placeholder="Амал килиш муддати" disabled/>
                                 </FormItem>
                                 <FormItem label="Ким томонидан берилган">
-                                    <Input value={this.state.receiver_passport_place_of_given} placeholder="Пул бирлиги" disabled/>
+                                    <Input value={this.state.receiver_passport_place_of_given} placeholder="Ким томонидан берилган" disabled/>
                                 </FormItem>
                                 <FormItem  label="Манзили">
-                                    <Input value={this.state.receiver_permanent_address} disabled/>
+                                    <Input value={this.state.receiver_permanent_address} placeholder="Манзили" disabled/>
                                 </FormItem>
-                                <FormItem  label="Тел. номер">
-                                    <Input value={this.state.receiver_phone_number} disabled/>
+                                <FormItem  label="Телефон рақами">
+                                    <Input value={this.state.receiver_phone_number} placeholder="Телефон рақами" disabled/>
                                 </FormItem>
                                 <FormItem label="Хисоб раками">
-                                    <Input value={this.state.receiver_account_number} disabled/>
+                                    <Input value={this.state.receiver_account_number} placeholder="Хисоб раками" disabled/>
                                 </FormItem>
                                 <FormItem  label="Кабул килинган пул шакли">
                                     <Input value={this.state.receive_paymentMethod} disabled/>
@@ -225,22 +473,25 @@ class Transactions extends Component {
                                 <FormItem  label="Кабул килинган пул бирлиги">
                                     <Input value={this.state.receive_currency} disabled/>
                                 </FormItem>
+                                <FormItem  label="Качон юборилган">
+                                <Input name="" value={this.state.updatedAt} placeholder="" disabled/>
+                            </FormItem>
                         </Col>
                         <Col className="gutter-row" span={8}>
                             <FormItem  label="Тартиб раками">
                                 <Input name="" value={this.state.transactions_id}  disabled/>
                             </FormItem>
-                            <FormItem  label="Качон юборилган">
-                                <Input name="receiver_fullname" value={this.state.createdAt} placeholder="Ф.И.Ш" disabled/>
-                            </FormItem>
                             <FormItem label="Юборилган филиал">
                                 <Input value={this.state.send_department} placeholder="Пасспорт маьлумотлари" disabled/>
                             </FormItem>
                             <FormItem label="Кабул килган филиал">
-                                <Input value={this.state.receive_department} placeholder="Пул микдори" disabled/>
+                                <Input value={this.state.receive_department} placeholder="Кабул килган филиал" disabled/>
                             </FormItem>
                             <FormItem  label="Статус">
-                                <Input value={this.state.status} placeholder="Пул бирлиги" disabled/>
+                                <Input value={this.state.status} placeholder="Статус" disabled/>
+                            </FormItem>
+                            <FormItem  label="Банк фойдаси">
+                                <Input value={this.state.bank_profit} placeholder="Банк фойдаси" disabled/>
                             </FormItem>
                         </Col>
                        </Row>

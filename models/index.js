@@ -19,7 +19,11 @@ const models = {
   Currency: sequelize.import('./currency'),
   Branch: sequelize.import('./branch'),
   PaymentMethod: sequelize.import('./paymentMethod'),
-  Transaction: sequelize.import('./transaction')
+  Transaction: sequelize.import('./transaction'),
+  Commission: sequelize.import('./commission'),
+  DepartmentStatus: sequelize.import('./DepartmentStatus'),
+  Test: sequelize.import('./TestTable'),
+  AloqaMobileTransactions: sequelize.import('./AloqaMobileTransactions')
  };
 
  // Schema files configuration

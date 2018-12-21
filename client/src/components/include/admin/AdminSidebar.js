@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Layout, Menu, Icon } from "antd";
 import { NavLink,withRouter } from "react-router-dom";
-
+const SubMenu = Menu.SubMenu;
 const { Sider } = Layout;
 
 class AdminSidebar extends Component {
@@ -35,7 +35,7 @@ class AdminSidebar extends Component {
             <Menu.Item key="/admin">
               <NavLink to="/admin">
                 <Icon type="user" />
-                <span className="nav-text">Бош сахифа</span>
+                <span className="nav-text">Бош саҳифа</span>
               </NavLink>
             </Menu.Item>
 
@@ -59,16 +59,30 @@ class AdminSidebar extends Component {
                 <span className="nav-text">Отказмалар</span>
               </NavLink>
             </Menu.Item>
-            <Menu.Item key="/settings">
-              <NavLink to="/settings">
-                <Icon type="setting" />
-                <span className="nav-text">Созламалар</span>
+            <SubMenu
+              key="sub1"
+              title={<span><Icon type="setting" /><span>Созламалар</span></span>}
+            >
+              <Menu.Item key="/commision">
+              <NavLink to="/commision">
+                <span className="nav-text">Банк хизмат ҳақлари</span>
               </NavLink>
-            </Menu.Item>
+              </Menu.Item>
+              <Menu.Item key="/roles">
+                <NavLink to="/roles">
+                  <span className="nav-text">Рўллар</span>
+                </NavLink>
+              </Menu.Item>
+              <Menu.Item key="/currency">
+                <NavLink to="/currency">
+                  <span className="nav-text">Валюталар</span>
+                </NavLink>
+              </Menu.Item>
+            </SubMenu>
 
             <Menu.Item key="logout">  
             <Icon type="logout" />              
-                <span className="nav-text" onClick={e=>this.logout()}>Чикиш</span>
+                <span className="nav-text" onClick={e=>this.logout()}>Чиқиш</span>
             </Menu.Item>
 
           </Menu>

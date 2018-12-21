@@ -26,7 +26,7 @@ if (process.env.NODE_ENV === 'production') {
 app.get('/send', passport.authenticate('jwt', { session: false}), homeControllers.dashboard);
 app.get('/user/me',  passport.authenticate('jwt', { session: false}), homeControllers.RoleAuthenticated);
 
-app.post('/admin/operators/add', adminControllers.add);
+app.post('/admin/operators/add', passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.add);
 app.get('/admin/operators', passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.allUsers);
 app.get('/admin/department/list', passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.getDepartmentList);
 app.post('/admin/department/add', passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.postDepartments);
@@ -40,7 +40,9 @@ app.get('/admin/roles',  passport.authenticate('jwt', { session: false}), auth.p
 app.get('/admin/currencies',  passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.getCurrencyList);
 app.post('/admin/roles/add',  passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.addRole);
 app.post('/admin/currency/add', passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.addCurrency);
-app.get('/admin/test', adminControllers.allUsers);
+app.post('/admin/commision/update', passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.addCommission);
+app.get('/admin/commission/fetch', passport.authenticate('jwt', { session: false}), adminControllers.fetchCommission);
+
 
 app.post('/api/auth/login', userControllers.postLogin);
 app.post('/api/createtransaction', passport.authenticate('jwt', { session: false}), userControllers.createTransaction);
@@ -51,5 +53,7 @@ app.get('/api/paymentmethodlist', passport.authenticate('jwt', { session: false}
 app.get('/api/printsenderinfo/:secretCode', passport.authenticate('jwt', { session: false}), userControllers.getInfoToPrint);
 // app.get('/api/myTransactions/send', passport.authenticate('jwt', { session: false}), userControllers.sentTransactions);
 app.get('/api/transactions/:operator', passport.authenticate('jwt', { session: false}), userControllers.sentTransactions);
+app.post('/api/mobile/createtransaction', passport.authenticate('jwt', { session: false}), userControllers.createTransactionByAloqaMobile);
+app.get('/api/aloqamobile/:secretCode', passport.authenticate('jwt', { session: false}), userControllers.searchTransactionByAloqaMobile);
 
 module.exports = app;

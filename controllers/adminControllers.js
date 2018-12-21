@@ -34,9 +34,10 @@ exports.allUsers = (req, res) => {
         for(user of users) {
             data = {};
             data.operator_id = user.id;
-            data.firstName = user.firstName;
-            data.lastName = user.lastName;
-            data.middleName = user.middleName;
+            data.fullName = `${user.firstName} ${user.lastName} ${user.middleName}`
+            // data.firstName = user.firstName;
+            // data.lastName = user.lastName;
+            // data.middleName = user.middleName;
             data.role = user.Role.name;
             data.MFO = user.Branch.MFO;
             data.Branch = user.Branch.department;
@@ -52,17 +53,27 @@ exports.allUsers = (req, res) => {
 //FETCH ALL DEPARTMENTS
 exports.getDepartmentList = (req, res) => {
     models.Branch.findAll({
-        attributes: ['id', 'MFO', 'department']
+        attributes: ['id', 'MFO', 'department'],
     }).then(departments => {
+        
+        result = [];
+        for(department of departments) {
+            data = {};
+            data.department_id = department.id;
+            data.MFO = department.MFO;
+            data.department = department.department;
+            // data.status = department.DepartmentStatus.status;
+            result.push(data);
+        }
         res.send({
-            departments: departments
+            result
         });
     });
 }
 
 // ADD NEW DEPARTMENTS
 exports.postDepartments = (req, res) => {
-    var body = _.pick(req.body, ['MFO', 'department']);
+    var body = _.pick(req.body, ['MFO', 'department', 'status']);
     models.Branch.create(body).then(() => {
         res.send({
             message: 'Филиал кошилди',
@@ -128,6 +139,7 @@ exports.getTransactions = (req, res) => {
             data.receiver_phone_number = (transaction.receiver_phone_number != null ? transaction.receiver_phone_number : "");
             data.receiver_account_number = (transaction.receiver_account_number != null ? transaction.receiver_account_number : "");
             data.createdAt = (transaction.createdAt != null ? transaction.createdAt : "");
+            data.updatedAt = (transaction.updatedAt != null ? transaction.updatedAt : "");
             data.status_id = (transaction.Status.id != null ? transaction.Status.id : "");
             data.status = (transaction.Status.status != null ? transaction.Status.status : "");
             data.send_paymentMethod_id = (transaction.Payment.id != null ? transaction.Payment.id : "");
@@ -138,6 +150,7 @@ exports.getTransactions = (req, res) => {
             data.send_currency = (transaction.Currency.name != null ? transaction.Currency.name : "");
             // data.receive_currency_id = (transaction.reciveCurrency.id != null ? transaction.reciveCurrency.id : "");
             data.receive_currency = (transaction.reciveCurrency != null ? transaction.reciveCurrency.name : "");
+            data.bank_profit = (transaction.bank_profit != null ? transaction.bank_profit : "");
             result.push(data);
         }
         res.send(result);
@@ -145,7 +158,7 @@ exports.getTransactions = (req, res) => {
 }
 
 exports.deleteDepartments = (req, res) => {
-    models.Branch.destroy({
+    models.Branch.update( {
         where: {
             id: req.params.id
         }
@@ -241,6 +254,32 @@ exports.addCurrency = (req, res) => {
             message: "Тармокдаги хатолик",
             success: false
         });
+    });
+}
+
+exports.addCommission = (req, res) => {
+    var body = _.pick(req.body, ['value']);
+    models.Commission.update(body, {
+        where: {
+            id: 1
+        }
+    }).then(() => {
+        res.send({
+            success: true,
+            message: "Банк хизмат хақи қўшилди"
+        });
+    }).catch(e => {
+        res.send({
+            message: "Тармоқдаги хатолик"
+        });
+    })
+}
+
+exports.fetchCommission = (req, res) => {
+    models.Commission.findAll({
+        attributes: ['id', 'value', 'updatedAt']
+    }).then(result => {
+        res.send(result);
     });
 }
 

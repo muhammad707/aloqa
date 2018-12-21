@@ -91,7 +91,7 @@ class Login extends Component {
                             <img
                                 width="30%"
                                 style={{marginBottom: "10px", marginTop: "10px"}}
-                                src="/images/logo-green-small-1x.png"
+                                src="/images/logo.png"
                                 alt="Hello"
                             />
                         </div>

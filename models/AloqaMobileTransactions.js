@@ -1,62 +1,33 @@
 const models = require('../models');
 const crypto = require("crypto");
 module.exports = (sequelize, Sequelize) => {
-    const Transactions = sequelize.define('Transactions', {
+    const AloqaMobileTransactions = sequelize.define('AloqaMobileTransactions', {
         id: {
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
             type: Sequelize.INTEGER
         },
-        send_department: {
+        sender_firstName: {
             type: Sequelize.STRING,
             allowNull: false
         },
-        sender_fullname: {
+        sender_lastName: {
             type: Sequelize.STRING,
             allowNull: false
         },
-        sender_passport_series: {
-            type: Sequelize.STRING(2),
-            allowNull:false
-        },
-        sender_passport_number: {
-            type: Sequelize.STRING,
-            allowNull:false
-        },
-        sender_passport_date_of_issue: {
-            type: Sequelize.DATEONLY,
-            allowNull:false
-
-        },
-        sender_passport_date_of_expiry: {
-            type: Sequelize.DATEONLY,
-            allowNull: false
-        },
-        sender_passport_place_of_given: {
-            type: Sequelize.STRING,
-            allowNull:false
-        },
-        sender_permanent_address: {
+        sender_middleName: {
             type: Sequelize.STRING,
             allowNull: false
-        },
-        sender_phone_number: {
-            type: Sequelize.STRING,
-            allowNull: false
-        },
-        sender_account_number: {
-            type: Sequelize.STRING
         },
         send_amount_in_number: {
             type: Sequelize.DOUBLE,
             allowNull: false
         },
-        send_amount_in_word: {
-            type: Sequelize.STRING,
+        sender_cardNumber: {
+            type: Sequelize.STRING(20),
             allowNull: false
         },
-
         receive_department: {
             type: Sequelize.STRING
         },
@@ -104,33 +75,15 @@ module.exports = (sequelize, Sequelize) => {
         freezeTableName: true
     });
 
-    Transactions.associate = (models) => {
-        Transactions.belongsTo(models.Currency, {
-            foreignKey: 'send_currency_type',
-            // as: 'sendCurrency'
-        });
-        Transactions.belongsTo(models.Currency, {
-            foreignKey: 'receive_currency_type',
-            as: 'reciveCurrency'
-        });
-        Transactions.belongsTo(models.Payment, {
-            foreignKey: 'send_payment_method'
-        });
-        Transactions.belongsTo(models.Payment, {
-            foreignKey: 'receive_payment_method',
-            as: 'receiveMethod'
-        });
-        Transactions.belongsTo(models.TransactionStatus, {
+    AloqaMobileTransactions.associate = (models) => {
+        AloqaMobileTransactions.belongsTo(models.TransactionStatus, {
             foreignKey: 'status'
         });
-        Transactions.belongsTo(models.User, {
-            foreignKey: 'send_operator'
-        });
-        Transactions.belongsTo(models.User, {
+        AloqaMobileTransactions.belongsTo(models.User, {
             foreignKey: 'receive_operator'
         });
     }
-    return Transactions;
+    return AloqaMobileTransactions;
 }
 
 generateSecretCode = () => {

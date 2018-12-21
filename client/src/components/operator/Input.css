@@ -1,0 +1,14 @@
+.input {
+    width: 100%;
+    padding-left: 20px;
+    padding-top: -10px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+   
+}
+
+.input:invalid {
+    border: 1px solid red;
+}

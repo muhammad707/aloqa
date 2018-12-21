@@ -22,5 +22,10 @@ module.exports = (sequelize, Sequelize) => {
         freezeTableName: true
     });
 
+    // Branch.associate = (models) => {
+    //     Branch.belongsTo(models.DepartmentStatus, {
+    //         foreignKey: 'status'
+    //     });
+    // }
     return Branch;
 }

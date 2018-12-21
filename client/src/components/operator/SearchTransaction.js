@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import DefaultLayout from '../layout/Default';
+import CurrencyFormat from 'react-currency-format';
+import './Input.css';
 import { Breadcrumb,
         Row, 
         Col, 
@@ -35,10 +37,15 @@ class SearchTransaction extends Component {
             amount: "",
             name: "",
             currency: "",
+            paymentMethod: undefined,
+            phone_number: undefined,
+            account_number: undefined,
             status: 2,
             createdAt: "",
             receive_department: undefined,
-            receiver_fullname: undefined,
+            receiver_firstName: undefined,
+            receiver_lastName: undefined,
+            receiver_middleName: undefined,
             receiver_passport_series: undefined,
             receiver_passport_number: undefined,
             receiver_passport_date_of_issue: undefined,
@@ -129,13 +136,12 @@ class SearchTransaction extends Component {
     }
 
     handleSubmit = (e) => {
-
         e.preventDefault();
         const { secretCode } = this.state;
         let that = this;
         that.setState({
             isLoading: true
-        });
+    });
 
         axios.post('/api/searchtransaction',  {
             secretCode: secretCode
@@ -144,7 +150,7 @@ class SearchTransaction extends Component {
                 Authorization: getJwt()
             }
         }).then((res) => {
-            console.log(res.data.array[0].status)
+            // console.log(res.data.array[0].status)
             if(res.data.success) {
                 this.setState({
                     secretCode: res.data.array[0].secretCode,
@@ -154,7 +160,10 @@ class SearchTransaction extends Component {
                     amount: res.data.array[0].amount,
                     currency: res.data.array[0].currency,
                     createdAt: res.data.array[0].createdAt,
-                    status: res.data.array[0].status
+                    status: res.data.array[0].status,
+                    account_number: res.data.array[0].account_number,
+                    paymentMethod: res.data.array[0].paymentMethod,
+                    phone_number: res.data.array[0].phone_number
                 });
                 const listItem = (
                         <Table rowKey="transaction_id" dataSource={res.data.array}>
@@ -163,11 +172,11 @@ class SearchTransaction extends Component {
                                 key="sender_fullname"
                                 dataIndex="sender_fullname" />
                             <Column 
-                                title="Пасспорт маьлумотлари"
+                                title="Пасспорт маълумотлари"
                                 key="sender_passport_info"
                                 dataIndex="sender_passport_info" />
                             <Column 
-                                title="Жонатма микдори"
+                                title="Жўнатма микдори"
                                 key="amount"
                                 dataIndex="amount" />
                             <Column 
@@ -175,7 +184,7 @@ class SearchTransaction extends Component {
                                 key="currency"
                                 dataIndex="currency" />
                             <Column 
-                                title="Отказма коди"
+                                title="Ўтказма коди"
                                 key="secretCode"
                                 dataIndex="secretCode" />
                             <Column 
@@ -183,7 +192,7 @@ class SearchTransaction extends Component {
                                 key="status"
                                 dataIndex="status" />
                             <Column 
-                                title="Кабул килиш" 
+                                title="Қабул қилиш" 
                                 key="action"
                                 render={() => (
                                     <div>
@@ -197,13 +206,13 @@ class SearchTransaction extends Component {
                 this.setState({
                     transaction: listItem,   
                 })
-                message.success(res.data.message);
-            } else { 
-                message.error(res.data.message);
-            }
+                notification['success']({
+                    message: res.data.message
+                })
+            } 
         }).catch(e => {
-            that.setState({
-                isLoading: false
+            notification['error']({
+                message: "Ўтказма мавжуд эмас"
             });
         });
 
@@ -244,7 +253,9 @@ class SearchTransaction extends Component {
     handleOk = () => {
 
         if(this.state.receive_department && 
-            this.state.receiver_fullname &&
+            this.state.receiver_firstName &&
+            this.state.receiver_lastName &&
+            this.state.receiver_middleName &&
             this.state.receiver_passport_series &&
             this.state.receiver_passport_number &&
             this.state.receiver_passport_date_of_issue &&
@@ -260,7 +271,7 @@ class SearchTransaction extends Component {
             let formData = {};
             formData.receive_operator = this.state.operator_id;
             formData.receive_department = this.state.receive_department;
-            formData.receiver_fullname = this.state.receiver_fullname;
+            formData.receiver_fullname = `${this.state.receiver_lastName} ${this.state.receiver_firstName} ${this.state.receiver_middleName}`;
             formData.receiver_passport_series = this.state.receiver_passport_series;
             formData.receiver_passport_number = this.state.receiver_passport_number;
             formData.receiver_passport_date_of_issue = this.state.receiver_passport_date_of_issue;
@@ -308,10 +319,10 @@ class SearchTransaction extends Component {
             <DefaultLayout>
                 <Breadcrumb style={{ margin: '16px 0' }}>
                 <Breadcrumb.Item>Оператор</Breadcrumb.Item>
-                <Breadcrumb.Item>Пул отказмасини излаш</Breadcrumb.Item>
+                <Breadcrumb.Item>Пул ўтказмасини излаш</Breadcrumb.Item>
                 </Breadcrumb>  
                 <div>
-                    <h1 style={{ textAlign: 'center'}}>Пул отказмасини излаш</h1>
+                    <h1 style={{ textAlign: 'center'}}>Пул ўтказмасини излаш</h1>
                     <Form onSubmit = {(e) => this.handleSubmit(e)}>
                         <Row gutter={18}>
                             <Col span={14} offset={2}>
@@ -344,85 +355,103 @@ class SearchTransaction extends Component {
                     {this.state.transaction}
                 </div>
                 <Modal 
-                    title={`Жонатмани кабул килиш (${this.state.createdAt})`}
+                    title={`Жўнатмани кабул килиш (${this.state.createdAt})`}
                     visible={visible}
                     width={1300}
                     centered
                    onOk = { this.handleOk} 
                    onCancel = { this.handleCancel} 
                    footer = {[
-                    <Button key="back" onClick={this.handleCancel}>Кайтиш</Button>,
-                    <Button key="submit" type="primary" loading={loading} onClick={this.handleOk}>Юбориш</Button>
+                    <Button key="back" onClick={this.handleCancel}>Бекор қилиш</Button>,
+                    <Button key="submit" type="primary" loading={loading} onClick={this.handleOk}>Қабул қилиш</Button>
                    ]}>
                     <Row  gutter={18}>
-                        <Col className="gutter-row" span={11}>
+                        <Col className="gutter-row" span={10}>
                            <Form>
                                <FormItem {...this.formItemLayout} label="Махсус код">
-                                    <Input name="" value={this.state.secretCode}  disabled/>
+                                    <input className="input" name="" value={this.state.secretCode}  disabled/>
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Ф.И.Ш">
-                                    <Input name="receiver_fullname" value={this.state.fullName} placeholder="Ф.И.Ш" disabled />
+                                    <input className="input" name="receiver_fullname" value={this.state.fullName} placeholder="Ф.И.Ш" disabled />
                                </FormItem>
-                               <FormItem {...this.formItemLayout} label="Пасспорт маьлумотлари">
-                                    <Input value={this.state.passport_info} placeholder="Пасспорт маьлумотлари" disabled/>
+                               <FormItem {...this.formItemLayout} label="Пасспорт маълумотлари">
+                                    <input className="input" value={this.state.passport_info} placeholder="Пасспорт маълумотлари" disabled/>
+                               </FormItem>
+                               <FormItem {...this.formItemLayout} label="Телефон рақами">
+                                    <input className="input" value={this.state.phone_number} placeholder="Пул бирлиги" disabled/>
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Пул микдори">
-                                    <Input value={this.state.amount} placeholder="Пул микдори" disabled/>
+                                    <CurrencyFormat thousandSeparator={true} className="input" value={this.state.amount} placeholder="Пул микдори" disabled/>
+                               </FormItem>
+                               <FormItem {...this.formItemLayout} label="Ҳисобварақ рақами">
+                                    <input className="input" value={this.state.account_number} placeholder="Ҳисобварақ рақами" disabled/>
+                               </FormItem>
+                               <FormItem {...this.formItemLayout} label="Юборилган пул шакли">
+                                    <input className="input" value={this.state.paymentMethod} placeholder="Ҳисобварақ рақами" disabled/>
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Пул бирлиги">
-                                    <Input value={this.state.currency} placeholder="Пул бирлиги" disabled/>
+                                    <input className="input" value={this.state.currency} placeholder="Пул бирлиги" disabled/>
+                               </FormItem>
+                               <FormItem {...this.formItemLayout} label="Қачон юборилган">
+                                    <input className="input" value={this.state.createdAt} placeholder="Пул бирлиги" disabled/>
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Статус">
-                                    <Input value={this.state.status} disabled/>
+                                    <input className="input" value={this.state.status} disabled/>
                                </FormItem>
                            </Form>
                         </Col>
-                        <Col className="gutter-row" span={12}>
+                        <Col className="gutter-row" span={13}>
                         <Form>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Ф.И.Ш">
-                                <Input name="receiver_fullname" id="success" placeholder="Ф.И.Ш" onChange={e => this.change(e)}/>
+                            <FormItem {...this.formItemLayout} hasFeedback validateStatus="success"  label="Фамилияси">
+                                <input className="input" name="receiver_lastName" id="success" placeholder="Олучининг фамилияси" onChange={e => this.change(e)}/>
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Пасспорт сериаси">
-                                <Input name="receiver_passport_series" maxLength="2" id="success" placeholder="Пасспорт сериаси" onChange={e => this.change(e)} />
+                            <FormItem {...this.formItemLayout} hasFeedback validateStatus="success"  label="Исми">
+                                <input className="input" name="receiver_firstName" id="success" placeholder="Олучининг исми" onChange={e => this.change(e)}/>
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Пасспорт номери">
-                                <Input name="receiver_passport_number" maxLength="7" id="success" placeholder="Пасспорт номери" onChange={e => this.change(e)} />
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success" label="Отасининг исми">
+                                <input className="input" name="receiver_middleName" id="success" placeholder="Отасининг исми" onChange={e => this.change(e)}/>
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Берилган вакти">
-                                <DatePicker size="default" name="receiver_passport_date_of_issue" placeholder="Паспорт берилган санаси" style={{ width: '100%' }} onChange={e => this.handleDate(e)} />
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success"  label="Пасспорт сериаси">
+                                <input className="input" name="receiver_passport_series" maxLength="2" id="success" placeholder="Пасспорт сериаси" onChange={e => this.change(e)} />
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Амал килиш муддати">
-                                <DatePicker size="default" name="receiver_passport_date_of_expiry" placeholder="Амал қилиш муддати" style={{ width: '100%' }} onChange={e => this.handleDate2(e)} />
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success"  label="Пасспорт номери">
+                                <CurrencyFormat className="input" name="receiver_passport_number" maxLength="7" id="success" placeholder="Пасспорт номери" onChange={e => this.change(e)} />
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Пасспорт берилган жойи">
-                                <Input name="receiver_passport_place_of_given" id="success" placeholder="Пасспорт берилган жойи" onChange={e => this.change(e)} />
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success"  label="Берилган вакти">
+                                <CurrencyFormat className="input" format="##.##.####" placeholder="DD.MM.YYYY" mask={['D', 'D','M', 'M', 'Y', 'Y', 'Y', 'Y']} name="receiver_passport_date_of_issue" onChange={e => this.change(e)} />
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Тел. номер">
-                                <Input name="receiver_phone_number" id="success" placeholder="Тел. номер"  onChange={e => this.change(e)}/>
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success"  label="Амал қилиш муддати">
+                                <CurrencyFormat className="input" name="receiver_passport_date_of_expiry"format="##.##.####" placeholder="DD.MM.YYYY" mask={['D', 'D','M', 'M', 'Y', 'Y', 'Y', 'Y']} onChange={e => this.change(e)} />
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Манзили">
-                                <Input name="receiver_permanent_address" placeholder="Манзили" onChange={e => this.change(e)} />
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success"  label="Пасспорт берилган жойи">
+                                <input className="input" name="receiver_passport_place_of_given" id="success" placeholder="Пасспорт берилган жойи" onChange={e => this.change(e)} />
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Ҳисобварақ рақами">
-                                <Input name="receiver_account_number" id="success" placeholder="Ҳисобварақ рақами" onChange={e => this.change(e)} />
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success"  label="Тел. номер">
+                                <CurrencyFormat className="input" name="receiver_phone_number" id="success" format="+998 (##) ###-####" mask="_" placeholder="+998 (__) ___-____" onChange={e => this.change(e)}/>
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Кабул килинган пул тури">
+                            <FormItem   {...this.formItemLayout} hasFeedback validateStatus="success"  label="Манзили">
+                                <input className="input" name="receiver_permanent_address" placeholder="Манзили" onChange={e => this.change(e)} />
+                            </FormItem>
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success"  label="Ҳисобварақ рақами">
+                                <CurrencyFormat className="input" name="receiver_account_number" id="success"  placeholder="Ҳисобварақ рақами" format="##### ### # ######## ###" mask="_" onChange={e => this.change(e)} />
+                            </FormItem>
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success"  label="Қабул қилинган пул тури">
                             <Select
                                 name="receive_currency_type"
-                                size="default"
+                                size="large"
                                 onChange={this.handleSelect}>
                                 {receive_currency_types.map(d => <Option key={d.id}>{d.value}</Option> )}
                             </Select>
                             </FormItem>
-                            <FormItem hasFeedback validateStatus="success" {...this.formItemLayout} label="Кабул килинган пул шакли">
-                            <Select name="receive_payment_method" size="default" onChange={this.handleSelect2}>
+                            <FormItem  {...this.formItemLayout} hasFeedback validateStatus="success" label="Қабул қилинган пул шакли">
+                            <Select size="large" name="receive_payment_method" onChange={this.handleSelect2}>
                                 {receive_payment_methods.map(d => <Option key={d.id}>{d.value}</Option> )}
                             </Select>
                             </FormItem>
                             
                            </Form>
                         </Col>
-                    </Row>
+                    </Row>  
                 </Modal>
             </DefaultLayout>
           );

@@ -1,25 +1,53 @@
 import React, { Component } from 'react';
 import moment from "moment";
-// import { NavLink } from 'react-router-dom';
+import CurrencyFormat from 'react-currency-format';
+import './Input.css';
 import {
   Breadcrumb,
   Form,
-  Input,
   Select,
   Row,
   Col,
-  DatePicker,
   Button,
   Modal,
-  message
+  message,
+  Tooltip,
+  notification,
+  Input
 } from 'antd';
 
 import DefaultLayout from '../layout/Default';
+import '../../index.css';
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
 const FormItem = Form.Item;
 const Option = Select.Option;
-// const AutoCompleteOption = AutoComplete.Option;
+
+function formatNumber(value) {
+  value += '';
+  const list = value.split('.');
+  const prefix = list[0].charAt(0) === '-' ? '-' : '';
+  let num = prefix ? list[0].slice(1) : list[0];
+  let result = '';
+  while (num.length > 3) {
+    result = ` ${num.slice(-3)}${result}`;
+    num = num.slice(0, num.length - 3);
+  }
+  if (num) {
+    result = num + result;
+  }
+  return `${prefix}${result}${list[1] ? `.${list[1]}` : ''}`;
+}
+
+function convertStringToDouble(value) {
+  var str = value.replace(/,/g, '');
+  return parseFloat(str);
+}
+
+function calculateTotalPrice(price, commission) {
+  return (price + (price*(commission/100)));
+}
+
 
 
 class PaymentSend extends Component {
@@ -31,17 +59,21 @@ class PaymentSend extends Component {
       send_department: undefined,
       operator_id: undefined,
       operator_name: undefined,
-      sender_fullname: undefined,
+      sender_lastName: undefined,
+      sender_firstName: undefined,
+      sender_middleName: undefined,
       sender_passport_series: undefined,
       sender_passport_number: undefined,
-      sender_passport_date_of_issue: moment(),
-      sender_passport_date_of_expiry: moment(),
+      sender_passport_date_of_issue:undefined,
+      sender_passport_date_of_expiry: undefined,
       sender_passport_place_of_given: undefined,
       sender_permanent_address: undefined,
       sender_phone_number: undefined,
       sender_account_number: undefined,
       send_amount_in_number: undefined,
       send_amount_in_word: undefined,
+      total_amount_in_number: undefined,
+      bank_profit: undefined,
       confirmLoading: false,
       send_currency_types: [],
       send_currency_type: undefined,
@@ -49,17 +81,19 @@ class PaymentSend extends Component {
       send_payment_method: undefined, 
       visible: false,
       secretCode: undefined,
-      status: "1"
+      status: "1",
+      commission: undefined
       
     };
     this.change = this.change.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-    this.handleChange2 = this.handleChange2.bind(this);
+    // this.handleChange = this.handleChange.bind(this);
+    // this.handleChange2 = this.handleChange2.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.handleSelect2 = this.handleSelect2.bind(this);
     this.showModal = this.showModal.bind(this);
     this.hideModal = this.hideModal.bind(this);
     // this.handleOk2 = this.handleOk2.bind(this);
+    this.onchangePassportSeries = this.onchangePassportSeries.bind(this);
   }
 
 
@@ -102,13 +136,28 @@ class PaymentSend extends Component {
         send_payment_methods: data
       });
     });
+    this.fetchCommission();
   }
 
+  fetchCommission() {
+    axios.get('/admin/commission/fetch', {
+      headers: {
+        Authorization: getJwt()
+      }
+    }).then(res => {
+      console.log(res.data[0].value);
+      this.setState({
+        commission: res.data[0].value
+      });
+    });
+  }
 
   handleOk = () => {
     if (
       this.state.send_department &&
-      this.state.sender_fullname &&
+      this.state.sender_lastName &&
+      this.state.sender_firstName &&
+      this.state.sender_middleName &&
       this.state.sender_passport_series &&
       this.state.sender_passport_number &&
       this.state.sender_passport_date_of_issue &&
@@ -124,10 +173,9 @@ class PaymentSend extends Component {
     ) {
       let formData = {};
       formData.send_operator = this.state.operator_id;
-      // formData.operator_name = this.state.operator_name;
       formData.send_department = this.state.send_department;
-      formData.sender_fullname = this.state.sender_fullname;
-      formData.sender_passport_series = this.state.sender_passport_series;
+      formData.sender_fullname = `${this.state.sender_lastName} ${this.state.sender_firstName} ${this.state.sender_middleName}`;
+      formData.sender_passport_series = this.state.sender_passport_series.toUpperCase();
       formData.sender_passport_number = this.state.sender_passport_number;
       formData.sender_passport_date_of_issue = this.state.sender_passport_date_of_issue;
       formData.sender_passport_date_of_expiry = this.state.sender_passport_date_of_expiry;
@@ -136,12 +184,13 @@ class PaymentSend extends Component {
       formData.send_currency_type = this.state.send_currency_type;
       formData.send_payment_method = this.state.send_payment_method;
       formData.sender_account_number = this.state.sender_account_number;
-      formData.sender_phone_number = this.state.sender_phone_number;
+      formData.sender_phone_number =this.state.sender_phone_number;
       formData.send_amount_in_number = this.state.send_amount_in_number;
       formData.send_amount_in_word = this.state.send_amount_in_word;
       formData.status = this.state.status;
+      // formData.total_amount_in_number = calculateTotalPrice(parseInt(this.state.send_amount_in_number), parseFloat(this.state.commission));
+      formData.bank_profit = (calculateTotalPrice(parseInt(this.state.send_amount_in_number), parseFloat(this.state.commission)) - parseFloat(this.state.send_amount_in_number));
       console.log(formData);
-      this.props.state = formData;
       axios.post('/api/createtransaction', formData, {
         headers: {
           Authorization: getJwt()
@@ -165,15 +214,34 @@ class PaymentSend extends Component {
             },
             okText: 'Амалга ошириш',
             cancelText: 'Бекор килиш',
+            
+          });
+          this.props.history.push('/print');
+          this.setState({
+            sender_lastName: "",
+            sender_firstName: "",
+            sender_middleName: "",
+            sender_passport_series: "",
+            sender_passport_number: "",
+            sender_passport_date_of_issue: "",
+            sender_passport_date_of_expiry: "",
+            sender_passport_place_of_given: "",
+            sender_permanent_address: "",
+            sender_phone_number: "",
+            sender_account_number: "",
+            send_amount_in_number: "",
+            send_amount_in_word: ""
           });
         }
       });
     } else {
-      Modal.error({
-        title: 'Transaction',
-        content: 'Not enough information'
-      });
-      
+      // Modal.error({
+      //   title: 'Ўтказмани юбориш',
+      //   content: 'Маълумотлар кам'
+      // });
+      notification['error']({
+        message: "Маълумотлар кам"
+      })
     }
   }
 
@@ -183,25 +251,32 @@ class PaymentSend extends Component {
     this.setState({ collapsed });
   }
 
-  handleSubmit = (e) => {
-    e.preventDefault();
-    
-  }
-
-
-  change(e) {
+ onChange = e => {
+  const { value } = e.target;
+  const reg = /^-?(0|[1-9][0-9]*)(\.[0-9]*)?$/;
+  if ((!Number.isNaN(value) && reg.test(value)) || value === '' || value === '-') {
     this.setState({
       [e.target.name]: e.target.value
     });
   }
-  handleChange = (event) => {
+ }
+
+ onChangePrice = () => {
+
+ }
+
+ onchangePassportSeries = e => {
+  const { value } = e.target;
+  const reg = /^([A-Z]*)$/;
+  if (reg.test(value) || value === '') {
     this.setState({
-      sender_passport_date_of_issue: event._d
+      [e.target.name]: e.target.value
     });
   }
-  handleChange2 = (event) => {
+ }
+  change(e) {
     this.setState({
-      sender_passport_date_of_expiry: event._d
+      [e.target.name]: e.target.value
     });
   }
 
@@ -221,133 +296,220 @@ class PaymentSend extends Component {
       console.log(this.state.send_payment_method);
     });
   }
+
   showModal = () => {
     this.setState({
       visible: true
     });
   }
+
   hideModal = () => {
     this.setState({
       visible: false
     })
   }
+
+  handleSubmit = (e) => {
+    e.preventDefault();
+    this.props.form.validateFields((err, values) => {
+      if (!err) {
+        console.log('Received values of form: ', values);
+      }
+    });
+  }
   
   render() {
-    const { send_currency_types, send_payment_methods, secretCode } = this.state;
+    let { send_amount_in_number, send_currency_types, send_payment_methods, secretCode } = this.state;
+    let title = send_amount_in_number ? (
+      <span className="numeric-input-title">
+        {send_amount_in_number !== '-' ? formatNumber(send_amount_in_number) : '-'}
+      </span>
+    ) : 'Суммани киритинг';
+    const { getFieldDecorator } = this.props.form;      
     return (
-      <DefaultLayout>
+     <DefaultLayout>
         <Breadcrumb style={{ margin: '16px 0' }}>
-          <Breadcrumb.Item>User</Breadcrumb.Item>
-          <Breadcrumb.Item>Bill</Breadcrumb.Item>
+            <Breadcrumb.Item>User</Breadcrumb.Item>
+            <Breadcrumb.Item>Bill</Breadcrumb.Item>
         </Breadcrumb>
-        <div style={{ marginLeft: '50px', background: '#fff' }}>
-          <h2>Пул ўтказмасини юбориш</h2>
-          <Form id="form">
-            <Row>
-              <Col span={16} >
-                <FormItem label="Ф.И.Ш" hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.sender_fullname} name="sender_fullname" placeholder="Ф.И.Ш" id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col className="gutter-row" span={6}>
-                <FormItem label="Паспорт серияси" hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.sender_passport_series} name="sender_passport_series" placeholder="Паспорт серияси" maxLength="2" id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-              <Col className="gutter-row" span={10}>
-                <FormItem label="Паспорт рақами" hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.sender_passport_number} name="sender_passport_number" placeholder="Паспорт рақами" maxLength="7" id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col className="gutter-row" span={8}>
-                <FormItem label="Паспорт берилган санаси" hasFeedback validateStatus="success">
-                  <DatePicker size="default" name="sender_passport_date_of_issue" placeholder="Паспорт берилган санаси" style={{ width: '100%' }} onChange={e => this.handleChange(e)} />
-                </FormItem>
-              </Col>
-              <Col className="gutter-row" span={8}>
-                <FormItem label="Амал қилиш муддати" hasFeedback validateStatus="success">
-                  <DatePicker size="default"  name="sender_passport_date_of_expiry" placeholder="Амал қилиш муддати" style={{ width: '100%' }} onChange={e => this.handleChange2(e)} />
-                </FormItem>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={8} >
-                <FormItem label="Паспорт берилган жойи" hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.sender_passport_place_of_given} name="sender_passport_place_of_given" placeholder="Паспорт берилган жойи" id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-              <Col span={8} >
-                <FormItem label="Тел. номер" hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.sender_phone_number} name="sender_phone_number" placeholder="Тел. номер  " id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={16} >
-                <FormItem label="Манзил" hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.sender_permanent_address} name="sender_permanent_address" placeholder="Манзил" id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-
-            </Row>
-            <Row gutter={16}>
-              <Col span={16} >
-                <FormItem label="Ҳисобварақ рақами " hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.sender_account_number} name="sender_account_number" placeholder="Ҳисобварақ рақами " id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col className="gutter-row" span={8}>
-                <FormItem label="Пул ўтказмасининг тури" hasFeedback validateStatus="success">
-                  <Select
-                    name="send_currency_type"
-                    size="default"
-                    onChange={this.handleSelect}>
-                      {send_currency_types.map(d => <Option key={d.id}>{d.value}</Option> )}
-                  </Select>
-                </FormItem>
-              </Col>
-              <Col className="gutter-row" span={8}>
-                <FormItem label="Топширилган пул шакли" hasFeedback validateStatus="success">
-                  <Select name="send_payment_method" size="default" onChange={this.handleSelect2}>
-                    {send_payment_methods.map(d => <Option key={d.id}>{d.value}</Option> )}
-                  </Select>
-                </FormItem>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col className="gutter-row" span={8}>
-                <FormItem label="Пул ўтказмасининг миқдори сонда" hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.send_amount_in_number} name="send_amount_in_number" placeholder="Пул ўтказмасининг миқдори сонда" id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-              <Col className="gutter-row" span={8}>
-                <FormItem label="Пул ўтказмасининг миқдори сўз билан" hasFeedback validateStatus="success">
-                  <Input size="default" value={this.state.send_amount_in_word} name="send_amount_in_word" placeholder="Пул ўтказмасининг миқдори сўз билан" id="success" onChange={e => this.change(e)} />
-                </FormItem>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col className="gutter-row" span={8}>
-                <Button type="primary" onClick={this.handleOk} size="large" style={{ float: 'right' }}>Маълумотларни сақлаш</Button>
-              </Col>
-              <Col className="gutter-row" span={8}>
-                <a target="_blank" href={"/print/" + {secretCode}}>
-                Print
-                </a>
-              </Col>
-            </Row>
-          </Form>
+        <div  style={{ marginLeft: '50px', background: '#fff' }}>
+            <h2>Пул ўтказмасини юбориш</h2>
+            <Form id="form" onSubmit={this.handleSubmit}>
+                <Row gutter={21}>
+                    <Col className="gutter-row" span={7}>
+                        <FormItem label="Фамилияси">
+                          <Input className="input" size="large" name="sender_lastName" placeholder="Фамилияси" onChange={e => this.change(e)} />
+                        </FormItem>   
+                    </Col>
+                    <Col className="gutter-row" span={7}>
+                        <FormItem label="Исми"> 
+                            <Input className="input" size="large" placeholder="Исми" name="sender_firstName" onChange={e => this.change(e)} />
+                        </FormItem>  
+                    </Col>
+                    <Col className="gutter-row" span={7}>
+                        <FormItem label="Отасининг исми">
+                              <input className="input" size="large" placeholder="Отасининг исми" name="sender_middleName" onChange={e => this.change(e)} />
+                        </FormItem>  
+                    </Col>
+                </Row>
+                <Row gutter={21}>
+                    <Col className="gutter-row" span={4}>
+                        <FormItem label="Паспорт серияси">
+                                <input className="input" placeholder="Паспорт серияси" style={{ width: '100%'}} name="sender_passport_series" maxLength="2" onChange={e => this.change(e)} />
+                        </FormItem>   
+                    </Col>
+                    <Col className="gutter-row" span={5}>
+                        <FormItem label="Паспорт номери">
+                             { getFieldDecorator('sender_passport_number', {
+                                rules: [{required: true, message: 'Илтимос пасспорт номерни киритинг ' }]
+                              })(
+                                <CurrencyFormat value={this.state.sender_passport_number} placeholder="Паспорт номери" className="input"  maxLength="7" name="sender_passport_number" onChange={e => this.change(e)} />
+                            )}
+                            
+                        </FormItem>   
+                    </Col>
+                    <Col className="gutter-row" span={6}>
+                        <FormItem label="Берилган вақти">
+                            { getFieldDecorator('sender_passport_date_of_issue', {
+                                rules: [{required: true, message: 'Илтимос пасспорт берилган вақтини киритинг ' }]
+                              })(
+                                <CurrencyFormat value={this.state.sender_passport_date_of_issue} className="input" style={{ width: '100%'}} name="sender_passport_date_of_issue" format="##.##.####" placeholder="DD.MM.YYYY" mask={['D', 'D','M', 'M', 'Y', 'Y', 'Y', 'Y']} onChange={e => this.change(e)}/>
+                            )}
+                        </FormItem>   
+                    </Col>
+                    <Col className="gutter-row" span={6}>
+                        <FormItem label="Амал қилиш муддати">
+                            { getFieldDecorator('sender_passport_date_of_expiry', {
+                                rules: [{required: true, message: 'Илтимос пасспорт амал қилиш муддатини киритинг' }]
+                              })(
+                                <CurrencyFormat value={this.state.sender_passport_date_of_expiry} className="input" style={{ width: '100%'}} name="sender_passport_date_of_expiry" format="##.##.####" placeholder="DD.MM.YYYY" mask={['D', 'D','M', 'M', 'Y', 'Y', 'Y', 'Y']} onChange={e => this.change(e)}/>
+                            )}
+                        
+                        </FormItem>   
+                    </Col>
+                </Row>
+                <Row gutter={21}>
+                    <Col span={13}>
+                        <FormItem label="Паспорт берилган жойи">
+                            { getFieldDecorator('sender_passport_place_of_given', {
+                                rules: [{required: true, message: 'Илтимос пасспорт берилган жойини киритинг' }]
+                              })(
+                                <input className="input" size="large" placeholder="Паспорт берилган жойи" style={{ width: '100%'}} name="sender_passport_place_of_given" onChange={e => this.change(e)} />
+                            )}
+                            
+                        </FormItem> 
+                    </Col>
+                    <Col span={8}>
+                        <FormItem label="Телефон рақами">
+                            { getFieldDecorator('sender_phone_number', {
+                                rules: [{required: true, message: 'Илтимос телефон рақамни киритинг' }]
+                              })(
+                                <CurrencyFormat value={this.state.sender_phone_number} className="input" name="sender_phone_number" style={{ width: '100%' }} format="+998 (##) ###-####" mask="_" onChange={e => this.change(e)} placeholder="+998 ( __ ) ___-____" />
+                            )}
+                        
+                        </FormItem> 
+                    </Col>
+                </Row>
+                <Row gutter={21}>
+                    <Col span={21}>
+                        <FormItem label="Яшаш манзили">
+                            { getFieldDecorator('sender_permanent_address', {
+                                rules: [{required: true, message: 'Илтимос манзилни киритинг' }]
+                              })(
+                                <input  className="input" size="large" placeholder="Яшаш манзили" name="sender_permanent_address" onChange={e => this.change(e)} />
+                            )} 
+                        </FormItem> 
+                    </Col>
+                </Row>
+                <Row gutter={21}>
+                    <Col span={21}>
+                        <FormItem label="Ҳисобварақ рақами">
+                           { getFieldDecorator('sender_account_number', {
+                                rules: [{required: true, message: 'Илтимос Ҳисобварақ рақамини киритинг' }]
+                              })(
+                                <CurrencyFormat  className="input" name="sender_account_number" placeholder="Ҳисобварақ рақами" format="##### ### # ######## ###" mask="_" style={{ width: '100%'}} onChange={e => this.change(e)} />
+                            )}
+                            
+                        </FormItem> 
+                    </Col>
+                </Row>
+                <Row gutter={21}>
+                    <Col span={10}>
+                        <FormItem label="Пул ўтказмасининг тури">
+                            { getFieldDecorator('send_currency_type', {
+                                rules: [{required: true, message: 'Илтимос пул ўтказмасининг тури танланг' }]
+                              })(
+                                <Select size="large" name="send_currency_type" onChange={this.handleSelect}>
+                                  {send_currency_types.map(d => <Option key={d.id}>{d.value}</Option> )}
+                                </Select>
+                            )}
+                            
+                        </FormItem> 
+                    </Col>
+                    <Col span={11}>
+                        <FormItem label="Топширилган пул шакли">
+                           { getFieldDecorator('send_payment_method', {
+                                rules: [{required: true, message: 'Илтимос топширилган пул шаклини танланг' }]
+                              })(
+                                <Select size="large" name="send_payment_method" onChange={this.handleSelect2}>
+                                {send_payment_methods.map(d => <Option key={d.id}>{d.value}</Option> )}
+                        
+                            </Select>
+                            )}
+                            
+                        </FormItem> 
+                    </Col>
+                </Row>
+                <Row gutter={21}>
+                    <Col span={10}>
+                        <FormItem label="Пул ўтказмасининг миқдори (сон билан)">
+                            {/* <CurrencyFormat className="input" thousandSeparator={true} placeholder="Пул ўтказмасининг миқдори (сон билан)" style={{ width: '100%'}} name="send_amount_in_number" onChange={e => this.change(e)} /> */}
+                            <Tooltip 
+                                trigger={['focus']}
+                                title={title}
+                                placement="topLeft"
+                                overlayClassName="numeric-input">
+                                 { getFieldDecorator('send_amount_in_number', {
+                                    rules: [{required: true, message: 'Илтимос суммани киритинг' }]
+                                  })(
+                                    <CurrencyFormat className="input" name="send_amount_in_number" placeholder="Пул ўтказмасининг миқдори (сон билан)" id="success" onChange={e => this.onChange(e)} />
+                                  )} 
+                            </Tooltip>
+                        </FormItem> 
+                    </Col>
+                    <Col span={11}>
+                        <FormItem label="Пул ўтказмасининг миқдори (сўз билан)">
+                                  { getFieldDecorator('send_amount_in_word', {
+                                    rules: [{required: true, message: 'Илтимос суммани киритинг (сўз билан)' }]
+                                  })(
+                                    <input className="input" size="large" placeholder="Пул ўтказмасининг миқдори (сўз билан)" style={{ width: '100%'}} name="send_amount_in_word" onChange={e => this.change(e)} />
+                                  )} 
+                            
+                        </FormItem> 
+                    </Col>
+                </Row>
+                <Row gutter={21}>
+                    <Col span={10}>
+                        <FormItem label="Банк хизмати">
+                            <CurrencyFormat  className="input" thousandSeparator={true} disabled value={this.state.bank_profit}  placeholder="Банк хизмати" style={{ width: '100%'}}  name="commission" value={ this.state.send_amount_in_number ? (parseInt(this.state.send_amount_in_number, 10) + parseInt(this.state.send_amount_in_number) * (parseFloat(this.state.commission))/100) - parseFloat(this.state.send_amount_in_number): ""} onChange={e => this.change(e)} />
+                        </FormItem> 
+                    </Col>
+                    <Col span={11}>
+                        <FormItem label="Юборувчидан олинадиган жами сумма">
+                            <CurrencyFormat name="total_amount_in_number" className="input" thousandSeparator={true} placeholder="Юборувчидан олинадиган жами сумма" style={{ width: '100%'}} value={ this.state.send_amount_in_number ? (parseInt(this.state.send_amount_in_number, 10) + parseInt(this.state.send_amount_in_number) * (parseFloat(this.state.commission))/100): ""}  onChange={e => this.change(e)} />
+                        </FormItem> 
+                    </Col>
+                </Row>
+                <Row gutter={21}>
+                  <Col style={{ float: "left" }} className="gutter-row" span={10}>
+                    <Button htmlType="submit" type="primary" onClick={this.handleOk} size="large" style={{ float: 'right' }}>Маълумотларни сақлаш</Button>
+                  </Col>
+              </Row>
+            </Form>
         </div>
-      </DefaultLayout>
+    </DefaultLayout>
     );
   }
   
 }
-
 export default Form.create()(PaymentSend);

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import AdminLayout from '../layout/AdminLayout';
-import { Breadcrumb, Button, Table,notification, Icon, Modal, Form, Input, Popconfirm, Divider } from 'antd';
+import { Breadcrumb, Button, Switch, Tag, Table,notification, Icon, Modal, Form, Input, Popconfirm, Divider } from 'antd';
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
 import Column from 'antd/lib/table/Column';
@@ -22,7 +22,7 @@ class Department extends Component {
         this.handleAdd = this.handleAdd.bind(this);
         this.handleCancel = this.handleCancel.bind(this);
         this.change = this.change.bind(this);
-        this.onDelete = this.onDelete.bind(this);
+        // this.onDelete = this.onDelete.bind(this);
         this.onEdit = this.onEdit.bind(this);
 
         // this.handleSubmit = this.handleSubmit.bind(this);
@@ -56,7 +56,7 @@ class Department extends Component {
             MFO: data.MFO,
             department: data.department,
             ModalText: "Озгартириш",
-            id: data.id,
+            id: data.department_id,
             url: "update"
         });
         this.showModal();
@@ -80,11 +80,11 @@ class Department extends Component {
         }).then(list => {
             console.log(list.data);
             const listItems = (
-                <Table rowKey="id" dataSource={list.data.departments}>
+                <Table rowKey="department_id" dataSource={list.data.result}>
                     <Column 
                         title="Тартиб раками" 
-                        key="id" 
-                        dataIndex="id" />
+                        key="department_id" 
+                        dataIndex="department_id" />
                     <Column 
                         title="МФО" 
                         key="MFO" 
@@ -94,21 +94,13 @@ class Department extends Component {
                         key="department"
                         dataIndex="department" />
                     <Column 
-                        title="Бошкариш" 
+                        title="Бошқариш" 
                         key="action"
                         render={(text, record) => (
                             <div>
                                 <Icon type="edit" onClick={() => this.onEdit(record)}/>
                                 <Divider type="vertical"/>
-                                <Popconfirm
-                                    title="Уверен ли удалить продукт ?"
-                                    onConfirm={() => {
-                                        this.onDelete(record.id);
-                                    }}
-                                    okText="Да"
-                                    cancelText="Нет">
-                                    <Icon type="delete"/>
-                                </Popconfirm>
+                                {/* <Switch checkedChildren={<Icon type="check" />} unCheckedChildren={<Icon type="close" />} defaultChecked /> */}
                             </div>
                         )} /> 
                 </Table>
@@ -204,7 +196,7 @@ class Department extends Component {
                     <Button type="primary" onClick={this.showModal}>
                     <Icon type="plus">
                     </Icon>
-                        Филиал кошиш
+                        Филиал қўшиш
                     </Button>
                     <Modal title={this.state.ModalText}
                     visible={this.state.visible}
@@ -212,8 +204,8 @@ class Department extends Component {
                     confirmLoading={this.state.confirmLoading}
                     onCancel={this.handleCancel}
                    footer = {[
-                    <Button key="back" onClick={this.handleCancel}>Кайтиш</Button>,
-                    <Button key="submit" type="primary" loading={loading} onClick={this.handleAdd}>Юбориш</Button>
+                    <Button key="back" onClick={this.handleCancel}>Бекор қилиш</Button>,
+                    <Button key="submit" type="primary" loading={loading} onClick={this.handleAdd}>Қўшиш</Button>
                    ]}>
                         <Form>
                             <FormItem label="МФО">
