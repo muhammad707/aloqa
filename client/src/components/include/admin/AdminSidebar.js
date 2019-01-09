@@ -52,15 +52,23 @@ class AdminSidebar extends Component {
                 <span className="nav-text">Операторлар</span>
               </NavLink>
             </Menu.Item>
-
-             <Menu.Item key="/transactions">
-              <NavLink to="/transactions">
-                <Icon type="shopping-cart" />
-                <span className="nav-text">Отказмалар</span>
-              </NavLink>
-            </Menu.Item>
             <SubMenu
               key="sub1"
+              title={<span><Icon type="setting" /><span>Ўтказмалар</span></span>}
+            >
+              <Menu.Item key="/transactions">
+              <NavLink to="/transactions">
+                <span className="nav-text">Банк ўтказмалари</span>
+              </NavLink>
+              </Menu.Item>
+              <Menu.Item key="/AdminAloqaMobileTransactions">
+                <NavLink to="/AdminAloqaMobileTransactions">
+                  <span className="nav-text">AloqaMobile ўтказмалари</span>
+                </NavLink>
+              </Menu.Item>
+            </SubMenu>
+            <SubMenu
+              key="sub2"
               title={<span><Icon type="setting" /><span>Созламалар</span></span>}
             >
               <Menu.Item key="/commision">

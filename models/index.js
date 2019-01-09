@@ -23,7 +23,8 @@ const models = {
   Commission: sequelize.import('./commission'),
   DepartmentStatus: sequelize.import('./DepartmentStatus'),
   Test: sequelize.import('./TestTable'),
-  AloqaMobileTransactions: sequelize.import('./AloqaMobileTransactions')
+  AloqaMobileTransactions: sequelize.import('./AloqaMobileTransactions'),
+  AloqaMobileOperator: sequelize.import('./AloqaMobileOperator')
  };
 
  // Schema files configuration

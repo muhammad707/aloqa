@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import AdminLayout from '../layout/AdminLayout';
-import { Breadcrumb, Button, Switch, Tag, Table,notification, Icon, Modal, Form, Input, Popconfirm, Divider } from 'antd';
+import { Breadcrumb, Button, Table,notification, Icon, Modal, Form, Input, Divider } from 'antd';
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
 import Column from 'antd/lib/table/Column';

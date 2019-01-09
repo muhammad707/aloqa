@@ -8,30 +8,32 @@ module.exports = (sequelize, Sequelize) => {
             autoIncrement: true,
             type: Sequelize.INTEGER
         },
-        sender_firstName: {
+        sender_full_name: {
             type: Sequelize.STRING,
             allowNull: false
         },
-        sender_lastName: {
+        sender_card_number: {
             type: Sequelize.STRING,
             allowNull: false
         },
-        sender_middleName: {
-            type: Sequelize.STRING,
-            allowNull: false
-        },
-        send_amount_in_number: {
+        amount: {
             type: Sequelize.DOUBLE,
             allowNull: false
         },
-        sender_cardNumber: {
-            type: Sequelize.STRING(20),
+        receiver_full_name: {
+            type: Sequelize.STRING, 
             allowNull: false
         },
         receive_department: {
             type: Sequelize.STRING
         },
-        receiver_fullname: {
+        receiver_firstName: {
+            type: Sequelize.STRING
+        },
+        receiver_lastName: {
+            type: Sequelize.STRING
+        },
+        receiver_middleName: {
             type: Sequelize.STRING
         },
         receiver_passport_series: {
@@ -56,6 +58,9 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING
         },
         receiver_account_number: {
+            type: Sequelize.STRING
+        },
+        hash: {
             type: Sequelize.STRING
         },
         createdAt: { type: Sequelize.DATEONLY, defaultValue: new Date() },

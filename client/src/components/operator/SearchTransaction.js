@@ -13,7 +13,6 @@ import { Breadcrumb,
         Table,
         Icon,
         Modal,
-        DatePicker, 
         Select,
         notification
          } from 'antd';
@@ -143,14 +142,13 @@ class SearchTransaction extends Component {
             isLoading: true
     });
 
-        axios.post('/api/searchtransaction',  {
-            secretCode: secretCode
-        }, {
+        axios.get('/api/searchtransaction/' + this.state.secretCode, {
             headers: {
                 Authorization: getJwt()
             }
         }).then((res) => {
             // console.log(res.data.array[0].status)
+            console.log(res.data);
             if(res.data.success) {
                 this.setState({
                     secretCode: res.data.array[0].secretCode,
@@ -209,11 +207,13 @@ class SearchTransaction extends Component {
                 notification['success']({
                     message: res.data.message
                 })
-            } 
+            } else {
+                notification['error']({
+                    message: "Ўтказма мавжуд эмас"
+                });
+            }
         }).catch(e => {
-            notification['error']({
-                message: "Ўтказма мавжуд эмас"
-            });
+            console.log(e);
         });
 
         console.log(that.state.isLoading);

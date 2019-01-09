@@ -7,6 +7,7 @@ const userControllers = require('./controllers/userControllers');
 const auth = require('./config/role');
 const keys = require('./config/config');
 const app = express();
+const { authenticate } = require('./config/authenticate');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false}));
@@ -42,18 +43,22 @@ app.post('/admin/roles/add',  passport.authenticate('jwt', { session: false}), a
 app.post('/admin/currency/add', passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.addCurrency);
 app.post('/admin/commision/update', passport.authenticate('jwt', { session: false}), auth.permit(1), adminControllers.addCommission);
 app.get('/admin/commission/fetch', passport.authenticate('jwt', { session: false}), adminControllers.fetchCommission);
-
+app.get('/admin/mobile/transactions', adminControllers.aloqaMobileTransactions);
 
 app.post('/api/auth/login', userControllers.postLogin);
 app.post('/api/createtransaction', passport.authenticate('jwt', { session: false}), userControllers.createTransaction);
 app.post('/api/confirmtransaction/:secretCode', passport.authenticate('jwt', { session: false}), userControllers.confirmTransaction);
-app.post('/api/searchtransaction',  passport.authenticate('jwt', { session: false}), userControllers.searchTransaction);
+app.get('/api/searchtransaction/:secretCode',  passport.authenticate('jwt', { session: false}), userControllers.searchTransaction);
 app.get('/api/currencylist', passport.authenticate('jwt', { session: false}), userControllers.currencyList);
 app.get('/api/paymentmethodlist', passport.authenticate('jwt', { session: false}), userControllers.paymentMethodList);
 app.get('/api/printsenderinfo/:secretCode', passport.authenticate('jwt', { session: false}), userControllers.getInfoToPrint);
 // app.get('/api/myTransactions/send', passport.authenticate('jwt', { session: false}), userControllers.sentTransactions);
 app.get('/api/transactions/:operator', passport.authenticate('jwt', { session: false}), userControllers.sentTransactions);
-app.post('/api/mobile/createtransaction', passport.authenticate('jwt', { session: false}), userControllers.createTransactionByAloqaMobile);
+app.get('/api/transactions/received/:operator', passport.authenticate('jwt', { session: false}), userControllers.receivedTransactions);
 app.get('/api/aloqamobile/:secretCode', passport.authenticate('jwt', { session: false}), userControllers.searchTransactionByAloqaMobile);
-
+app.post('/api/mobile/createtransaction', authenticate, userControllers.createTransactionsByMobile);
+app.get('/api/mobile/receivedtransaction', passport.authenticate('jwt', { session: false}), userControllers.receivedTransactionsByAloqaMobile);
+app.get('/api/mobile/commission', authenticate, adminControllers.fetchCommission);
+app.post('/api/mobile/confirmtransaction/:secretCode', passport.authenticate('jwt', { session: false}), userControllers.receiveTransactionFromAloqaMobile);
+app.post('/api/mobile/getsecretcode', authenticate, userControllers.getSecretCodeWithHash);
 module.exports = app;

@@ -289,44 +289,6 @@ class Transactions extends Component {
                             ): fullName;
                         }}  />
                     <Column 
-                         title="Пул юборилган филиал"
-                         key="receive_department"
-                         dataIndex="receive_department"
-                         filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
-                            <div className="custom-filter-dropdown">
-                                <Input
-                                    ref={ele => this.searchInput = ele}
-                                    placeholder="Олувчи Ф.И.Ш бўйича қидириш"
-                                    value={selectedKeys[0]}
-                                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                                    onPressEnter={this.handleSearchByReceiveDepartment(selectedKeys, confirm)}
-                                />
-                                <Button type="primary" onClick={this.handleResetByReceiveDepartment(selectedKeys, confirm)}>Поиск</Button>
-                                <Button onClick={this.handleResetByReceiveDepartment(clearFilters)}>Сброс</Button>
-                            </div>
-                        )}
-                        filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
-                        onFilter={(value, record) => record.receive_department ? record.receive_department.toLowerCase().includes(value.toLowerCase()) : record.receive_department}
-                        onFilterDropdownVisibleChange={(visible) => {
-                            if (visible) {
-                                setTimeout(() => {
-                                    this.searchInput.focus();
-                                });
-                            }
-                        }}
-                        render = {(fullName) => {
-                            const {searchReceiveDepartment} = this.state;
-                            // console.log(fullName);
-                            return searchReceiveDepartment ? (
-                                <span>
-                                    {fullName.split(new RegExp(`(${searchReceiveDepartment})`, 'gi')).map((fragment, i) => (
-                                    fragment.toLowerCase() === searchReceiveDepartment.toLowerCase()
-                                        ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
-                                    ))}
-                                </span>
-                            ): fullName;
-                        }} />
-                    <Column 
                          title="Статус"
                          key="status"
                          dataIndex="status"
@@ -359,22 +321,9 @@ class Transactions extends Component {
    
 
     render() {
-        let { visible, sortedInfo, filteredInfo } = this.state;
-        sortedInfo = sortedInfo || {};
-        filteredInfo = filteredInfo || {};
-        const columns = [{
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            filters: [
-                { text: 'оплачен', value: 'оплачен' },
-                { text: 'создан', value: 'создан' },
-              ],
-            filteredValue: filteredInfo.status || null,
-            onFilter: (value, record) => record.status.includes(value),
-            sorter: (a, b) => a.status.length - b.status.length,
-            sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
-        }]
+        let { visible } = this.state;
+        // sortedInfo = sortedInfo || {};
+        // filteredInfo = filteredInfo || {};
         return(
             <AdminLayout>
                 <Breadcrumb style={{ margin: '16px 0' }}>
@@ -382,7 +331,7 @@ class Transactions extends Component {
                     <Breadcrumb.Item>Отказмалар</Breadcrumb.Item>
                 </Breadcrumb>
                 <h1>
-                    Отказмалар
+                    Ўтказмалар
                 </h1>
                 {this.state.transactions}
                 <Modal 

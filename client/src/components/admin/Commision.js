@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import AdminLayout from '../layout/AdminLayout';
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
-import { Table, Row, Breadcrumb, notification, Col, Tooltip, Button, Icon, Modal, Form, Input } from 'antd';
+import { Table, Breadcrumb, notification, Tooltip, Button, Icon, Modal, Form, Input } from 'antd';
 import Column from 'antd/lib/table/Column';
 const FormItem = Form.Item;
 function formatNumber(value) {
@@ -72,15 +72,12 @@ class Commision extends Component {
                   Authorization: getJwt()
               }
           }).then(res => {
-              this.setState({
-                  commission: res.data[0].value
-              })
               const listItems = (
                 <Table rowKey="id" dataSource={res.data}>
                 <Column 
                     title="Банк хизмат хақи (фоизда)" 
-                    key="value" 
-                    dataIndex="value" />
+                    key="commissionRate" 
+                    dataIndex="commissionRate" />
                 <Column 
                     title="Ўзгартирилган санаси" 
                     key="updatedAt" 

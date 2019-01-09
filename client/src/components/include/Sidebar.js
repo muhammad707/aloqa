@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Layout, Menu, Icon } from "antd";
 import { NavLink,withRouter } from "react-router-dom";
-
+const SubMenu = Menu.SubMenu;
 const { Sider } = Layout;
 
 class Sidebar extends Component {
@@ -46,24 +46,59 @@ class Sidebar extends Component {
               </NavLink>
             </Menu.Item>
 
-             <Menu.Item key="/search">
+             {/* <Menu.Item key="/search">
               <NavLink to="/search">
                 <Icon type="shopping-cart" />
                 <span className="nav-text">Ўтказмани қабул қилиш</span>
               </NavLink>
-            </Menu.Item>
-            <Menu.Item key="/myTransactions">
+            </Menu.Item> */}
+            <SubMenu
+              key="sub1"
+              title={<span><Icon type="setting" /><span>Ўтказмани қабул қилиш</span></span>}
+            >
+              <Menu.Item key="/search">
+                <NavLink to="/search">
+                  <span className="nav-text">Банк ўтказмалари</span>
+                </NavLink>
+              </Menu.Item>
+              <Menu.Item key="/aloqamobiletransactions">
+                <NavLink to="/aloqamobiletransactions">
+                  <span className="nav-text">AloqaMobile ўтказмалари</span>
+                </NavLink>
+              </Menu.Item>
+            </SubMenu>
+            {/* <Menu.Item key="/myTransactions">
               <NavLink to="/myTransactions">
                 <Icon type="shopping-cart" />
                 <span className="nav-text">Ўтказмалар</span>
               </NavLink>
-            </Menu.Item>
-            <Menu.Item key="/aloqamobiletransactions">
+            </Menu.Item> */}
+            <SubMenu
+              key="sub2"
+              title={<span><Icon type="setting" /><span>Ўтказмалар</span></span>}
+            >
+              <Menu.Item key="/sentExpressTransactions">
+                <NavLink to="/sentExpressTransactions">
+                  <span className="nav-text">Юборилган</span>
+                </NavLink>
+              </Menu.Item>
+              <Menu.Item key="/receivedExpressTransactions">
+                <NavLink to="/receivedExpressTransactions">
+                  <span className="nav-text">Қабул қилинган</span>
+                </NavLink>
+              </Menu.Item>
+              <Menu.Item key="/transactionAloqaMobile">
+                <NavLink to="/transactionAloqaMobile">
+                  <span className="nav-text">AloqaMobile ўтказмалари</span>
+                </NavLink>
+              </Menu.Item>
+            </SubMenu>
+            {/* <Menu.Item key="/aloqamobiletransactions">
               <NavLink to="/aloqamobiletransactions">
                 <Icon type="shopping-cart" />
                 <span className="nav-text">AloqaMobile</span>
               </NavLink>
-            </Menu.Item>
+            </Menu.Item> */}
 
             <Menu.Item key="logout">  
             <Icon type="logout" />              

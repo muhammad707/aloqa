@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import AdminLayout from '../layout/AdminLayout';
-import { Breadcrumb, Divider, Popconfirm, Select,  Button, Table,notification, Icon, Modal, Form, Input } from 'antd';
+import { Breadcrumb, Select,  Button, Table,notification, Icon, Modal, Form, Input } from 'antd';
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
 import Column from 'antd/lib/table/Column';
@@ -32,18 +32,16 @@ class Operators extends Component {
             url: "add",
             id: undefined, 
             searchName: '',
-            searchLogin: '',
+            searchRole: '',
             searchMFO: ''
 
         }
-        // this.handleAdd = this.handleAdd.bind(this);
         this.handleCancel = this.handleCancel.bind(this);
         this.change = this.change.bind(this);
         this.handleSelect = this.handleSelect.bind(this);
         this.handleSelect2 = this.handleSelect2.bind(this);
         this.handleOk = this.handleOk.bind(this);
         this.onEdit = this.onEdit.bind(this);
-        // this.onDelete = this.onDelete.bind(this);
     }
 
     componentDidMount(){
@@ -92,14 +90,14 @@ class Operators extends Component {
         this.setState({ searchName: '' });
       }
 
-    handleSearchLogin = (selectedKeys, confirm) => () => {
+    handleSearchRole = (selectedKeys, confirm) => () => {
     confirm();
-    this.setState({ searchLogin: selectedKeys[0] });
+    this.setState({ searchRole: selectedKeys[0] });
     }
 
-    handleResetLogin = clearFilters => () => {
+    handleResetRole = clearFilters => () => {
         clearFilters();
-        this.setState({ searchLogin: '' });
+        this.setState({ searchRole: '' });
     }
 
     handleSearchMFO = (selectedKeys, confirm) => () => {
@@ -245,9 +243,9 @@ class Operators extends Component {
                         key="Branch"
                         dataIndex="Branch" />
                     <Column 
-                        title="Логин" 
-                        key="username"
-                        dataIndex="username"
+                        title="Рўли" 
+                        key="role"
+                        dataIndex="role"
                         filterDropdown = {({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
                             <div className="custom-filter-dropdown">
                                 <Input
@@ -255,14 +253,14 @@ class Operators extends Component {
                                     placeholder="Логин бўйича қидириш"
                                     value={selectedKeys[0]}
                                     onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                                    onPressEnter={this.handleSearchLogin(selectedKeys, confirm)}
+                                    onPressEnter={this.handleSearchRole(selectedKeys, confirm)}
                                 />
-                                <Button type="primary" onClick={this.handleSearchLogin(selectedKeys, confirm)}>Поиск</Button>
-                                <Button onClick={this.handleResetLogin(clearFilters)}>Сброс</Button>
+                                <Button type="primary" onClick={this.handleSearchRole(selectedKeys, confirm)}>Поиск</Button>
+                                <Button onClick={this.handleResetRole(clearFilters)}>Сброс</Button>
                             </div>
                         )}
                         filterIcon={filtered => <Icon type="search" style={{color: filtered ? '#108ee9' : '#aaa'}}/>}
-                        onFilter={(value, record) => record.username ? record.username.toLowerCase().includes(value.toLowerCase()) : record.username}
+                        onFilter={(value, record) => record.role ? record.role.toLowerCase().includes(value.toLowerCase()) : record.role}
                         onFilterDropdownVisibleChange={(visible) => {
                             if (visible) {
                                 setTimeout(() => {
@@ -271,12 +269,12 @@ class Operators extends Component {
                             }
                         }} 
                         render = {(username) => {
-                            const {searchLogin} = this.state;
+                            const {searchRole} = this.state;
                             console.log(username);
-                            return searchLogin ? (
+                            return searchRole ? (
                                 <span>
-                                    {username.split(new RegExp(`(${searchLogin})`, 'gi')).map((fragment, i) => (
-                                    fragment.toLowerCase() === searchLogin.toLowerCase()
+                                    {username.split(new RegExp(`(${searchRole})`, 'gi')).map((fragment, i) => (
+                                    fragment.toLowerCase() === searchRole.toLowerCase()
                                         ? <span key={i} className="highlight">{fragment}</span> : fragment // eslint-disable-line
                                     ))}
                                 </span>
@@ -288,16 +286,6 @@ class Operators extends Component {
                         render={(text, record) => (
                             <div>
                                 <Icon type="edit" onClick={() => this.onEdit(record)}/>
-                                {/* <Divider type="vertical"/>
-                                <Popconfirm
-                                    title=" Учирилсинми ?"
-                                    onConfirm={() => {
-                                        this.onDelete(record.operator_id);
-                                    }}
-                                    okText="Да"
-                                    cancelText="Нет">
-                                    <Icon type="delete"/>
-                                </Popconfirm> */}
                             </div>
                         )} /> 
                 </Table>

@@ -6,7 +6,7 @@ import { getJwt } from '../../helpers/jwt';
 import Column from 'antd/lib/table/Column';
 const FormItem = Form.Item;
 
-class OperatorTransactions extends Component {
+class OperatorTransactionsReceived extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -88,7 +88,7 @@ class OperatorTransactions extends Component {
             }
         }).then(res => {
             var operator = res.data.result[0].id;
-            axios.get('/api/transactions/' + operator, {
+            axios.get('/api/transactions/received/' + operator, {
                 headers: {
                     Authorization: getJwt()
                 }
@@ -241,25 +241,24 @@ class OperatorTransactions extends Component {
                                 </FormItem>
                         </Col>
                         <Col className="gutter-row" span={8}>
-                                <FormItem  label="Тартиб раками">
-                                    <Input name="" value={this.state.transactions_id}  disabled/>
-                                </FormItem>
-                                <FormItem  label="Качон юборилган">
-                                    <Input name="receiver_fullname" value={this.state.createdAt} placeholder="Ф.И.Ш" disabled/>
-                                </FormItem>
-                                <FormItem label="Юборилган филиал">
-                                    <Input value={this.state.send_department} placeholder="Пасспорт маьлумотлари" disabled/>
-                                </FormItem>
-                                <FormItem label="Кабул килган филиал">
-                                    <Input value={this.state.receive_department} placeholder="Пул микдори" disabled/>
-                                </FormItem>
-                                <FormItem  label="Статус">
-                                    <Input value={this.state.status} placeholder="Пул бирлиги" disabled/>
-                                </FormItem>
-                                <FormItem {...this.formItemLayout} label="Статус">
-                                    <Input value={this.state.status} disabled/>
-                                </FormItem>
-
+                            <FormItem  label="Тартиб раками">
+                                <Input name="" value={this.state.transactions_id}  disabled/>
+                            </FormItem>
+                            <FormItem  label="Качон юборилган">
+                                <Input name="receiver_fullname" value={this.state.createdAt} placeholder="Ф.И.Ш" disabled/>
+                            </FormItem>
+                            <FormItem label="Юборилган филиал">
+                                <Input value={this.state.send_department} placeholder="Пасспорт маьлумотлари" disabled/>
+                            </FormItem>
+                            <FormItem label="Кабул килган филиал">
+                                <Input value={this.state.receive_department} placeholder="Пул микдори" disabled/>
+                            </FormItem>
+                            <FormItem  label="Статус">
+                                <Input value={this.state.status} placeholder="Пул бирлиги" disabled/>
+                            </FormItem>
+                            <FormItem {...this.formItemLayout} label="Статус">
+                                <Input value={this.state.status} disabled/>
+                            </FormItem>
                         </Col>
                        </Row>
                     </Modal>
@@ -268,5 +267,4 @@ class OperatorTransactions extends Component {
         );
     }
 }
-
-export default OperatorTransactions;
+export default OperatorTransactionsReceived;

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import AdminLayout from '../layout/AdminLayout';
 import axios from 'axios';
 import { getJwt } from '../../helpers/jwt';
-import { Breadcrumb, Table, Form, Row, Col, Button, Icon, Input, Modal, notification } from 'antd';
+import { Breadcrumb, Table, Form, Col, Button, Icon, Input, Modal, notification } from 'antd';
 import Column from 'antd/lib/table/Column';
 const FormItem = Form.Item;
 

@@ -12,7 +12,19 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: false
         },
-        sender_fullname: {
+        sender_firstName: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+        sender_lastName: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+        sender_middleName: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+        receiver_fullName_from_Sender: {
             type: Sequelize.STRING,
             allowNull: false
         },
@@ -60,7 +72,13 @@ module.exports = (sequelize, Sequelize) => {
         receive_department: {
             type: Sequelize.STRING
         },
-        receiver_fullname: {
+        receiver_firstName: {
+            type: Sequelize.STRING
+        },
+        receiver_lastName: {
+            type: Sequelize.STRING
+        },
+        receiver_middleName: {
             type: Sequelize.STRING
         },
         receiver_passport_series: {
@@ -127,7 +145,8 @@ module.exports = (sequelize, Sequelize) => {
             foreignKey: 'send_operator'
         });
         Transactions.belongsTo(models.User, {
-            foreignKey: 'receive_operator'
+            foreignKey: 'receive_operator',
+            as: 'receiveOperator'
         });
     }
     return Transactions;

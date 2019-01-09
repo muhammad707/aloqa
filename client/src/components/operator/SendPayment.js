@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import moment from "moment";
 import CurrencyFormat from 'react-currency-format';
 import './Input.css';
 import {
@@ -9,7 +8,6 @@ import {
   Row,
   Col,
   Button,
-  Modal,
   message,
   Tooltip,
   notification,
@@ -39,10 +37,10 @@ function formatNumber(value) {
   return `${prefix}${result}${list[1] ? `.${list[1]}` : ''}`;
 }
 
-function convertStringToDouble(value) {
-  var str = value.replace(/,/g, '');
-  return parseFloat(str);
-}
+// function convertStringToDouble(value) {
+//   var str = value.replace(/,/g, '');
+//   return parseFloat(str);
+// }
 
 function calculateTotalPrice(price, commission) {
   return (price + (price*(commission/100)));
@@ -82,7 +80,8 @@ class PaymentSend extends Component {
       visible: false,
       secretCode: undefined,
       status: "1",
-      commission: undefined
+      commission: undefined,
+      receiver_fullName_from_Sender: undefined
       
     };
     this.change = this.change.bind(this);
@@ -145,14 +144,13 @@ class PaymentSend extends Component {
         Authorization: getJwt()
       }
     }).then(res => {
-      console.log(res.data[0].value);
       this.setState({
         commission: res.data[0].value
       });
     });
   }
 
-  handleOk = () => {
+  handleSubmit = (e) => {
     if (
       this.state.send_department &&
       this.state.sender_lastName &&
@@ -174,7 +172,10 @@ class PaymentSend extends Component {
       let formData = {};
       formData.send_operator = this.state.operator_id;
       formData.send_department = this.state.send_department;
-      formData.sender_fullname = `${this.state.sender_lastName} ${this.state.sender_firstName} ${this.state.sender_middleName}`;
+      formData.sender_firstName = this.state.sender_firstName;
+      formData.sender_lastName = this.state.sender_lastName;
+      formData.sender_middleName = this.state.sender_middleName;
+      formData.receiver_fullName_from_Sender = this.state.receiver_fullName_from_Sender;
       formData.sender_passport_series = this.state.sender_passport_series.toUpperCase();
       formData.sender_passport_number = this.state.sender_passport_number;
       formData.sender_passport_date_of_issue = this.state.sender_passport_date_of_issue;
@@ -201,21 +202,21 @@ class PaymentSend extends Component {
           message.success(res.data.message);
           this.setState({
             secretCode: res.data.secretCode
-          })
-          Modal.confirm({
-            title: 'Отказма',
-            content: ' Отказма амалга оширилсинми',
-            onOk() {
-              Modal.success({
-                title: "Success",
-                content: res.data.secretCode,
-                
-              })
-            },
-            okText: 'Амалга ошириш',
-            cancelText: 'Бекор килиш',
-            
           });
+          // Modal.confirm({
+          //   title: 'Отказма',
+          //   content: ' Отказма амалга оширилсинми',
+          //   onOk() {
+          //     Modal.success({
+          //       title: "Success",
+          //       content: res.data.secretCode,
+                
+          //     })
+          //   },
+          //   okText: 'Амалга ошириш',
+          //   cancelText: 'Бекор килиш',
+            
+          // });
           this.props.history.push('/print');
           this.setState({
             sender_lastName: "",
@@ -309,17 +310,17 @@ class PaymentSend extends Component {
     })
   }
 
-  handleSubmit = (e) => {
-    e.preventDefault();
-    this.props.form.validateFields((err, values) => {
-      if (!err) {
-        console.log('Received values of form: ', values);
-      }
-    });
-  }
+  // handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   this.props.form.validateFields((err, values) => {
+  //     if (!err) {
+  //       console.log('Received values of form: ', values);
+  //     }
+  //   });
+  // }
   
   render() {
-    let { send_amount_in_number, send_currency_types, send_payment_methods, secretCode } = this.state;
+    let { send_amount_in_number, send_currency_types, send_payment_methods } = this.state;
     let title = send_amount_in_number ? (
       <span className="numeric-input-title">
         {send_amount_in_number !== '-' ? formatNumber(send_amount_in_number) : '-'}
@@ -334,16 +335,16 @@ class PaymentSend extends Component {
         </Breadcrumb>
         <div  style={{ marginLeft: '50px', background: '#fff' }}>
             <h2>Пул ўтказмасини юбориш</h2>
-            <Form id="form" onSubmit={this.handleSubmit}>
+            <Form id="form">
                 <Row gutter={21}>
                     <Col className="gutter-row" span={7}>
                         <FormItem label="Фамилияси">
-                          <Input className="input" size="large" name="sender_lastName" placeholder="Фамилияси" onChange={e => this.change(e)} />
+                          <input className="input" name="sender_lastName" placeholder="Фамилияси" onChange={e => this.change(e)} />
                         </FormItem>   
                     </Col>
                     <Col className="gutter-row" span={7}>
                         <FormItem label="Исми"> 
-                            <Input className="input" size="large" placeholder="Исми" name="sender_firstName" onChange={e => this.change(e)} />
+                            <input className="input" size="large" placeholder="Исми" name="sender_firstName" onChange={e => this.change(e)} />
                         </FormItem>  
                     </Col>
                     <Col className="gutter-row" span={7}>
@@ -360,103 +361,61 @@ class PaymentSend extends Component {
                     </Col>
                     <Col className="gutter-row" span={5}>
                         <FormItem label="Паспорт номери">
-                             { getFieldDecorator('sender_passport_number', {
-                                rules: [{required: true, message: 'Илтимос пасспорт номерни киритинг ' }]
-                              })(
                                 <CurrencyFormat value={this.state.sender_passport_number} placeholder="Паспорт номери" className="input"  maxLength="7" name="sender_passport_number" onChange={e => this.change(e)} />
-                            )}
-                            
                         </FormItem>   
                     </Col>
                     <Col className="gutter-row" span={6}>
                         <FormItem label="Берилган вақти">
-                            { getFieldDecorator('sender_passport_date_of_issue', {
-                                rules: [{required: true, message: 'Илтимос пасспорт берилган вақтини киритинг ' }]
-                              })(
                                 <CurrencyFormat value={this.state.sender_passport_date_of_issue} className="input" style={{ width: '100%'}} name="sender_passport_date_of_issue" format="##.##.####" placeholder="DD.MM.YYYY" mask={['D', 'D','M', 'M', 'Y', 'Y', 'Y', 'Y']} onChange={e => this.change(e)}/>
-                            )}
                         </FormItem>   
                     </Col>
                     <Col className="gutter-row" span={6}>
                         <FormItem label="Амал қилиш муддати">
-                            { getFieldDecorator('sender_passport_date_of_expiry', {
-                                rules: [{required: true, message: 'Илтимос пасспорт амал қилиш муддатини киритинг' }]
-                              })(
                                 <CurrencyFormat value={this.state.sender_passport_date_of_expiry} className="input" style={{ width: '100%'}} name="sender_passport_date_of_expiry" format="##.##.####" placeholder="DD.MM.YYYY" mask={['D', 'D','M', 'M', 'Y', 'Y', 'Y', 'Y']} onChange={e => this.change(e)}/>
-                            )}
                         
                         </FormItem>   
                     </Col>
                 </Row>
                 <Row gutter={21}>
                     <Col span={13}>
-                        <FormItem label="Паспорт берилган жойи">
-                            { getFieldDecorator('sender_passport_place_of_given', {
-                                rules: [{required: true, message: 'Илтимос пасспорт берилган жойини киритинг' }]
-                              })(
-                                <input className="input" size="large" placeholder="Паспорт берилган жойи" style={{ width: '100%'}} name="sender_passport_place_of_given" onChange={e => this.change(e)} />
-                            )}
-                            
+                        <FormItem label="Паспорт берилган жойи">      
+                          <input className="input" size="large" placeholder="Паспорт берилган жойи" style={{ width: '100%'}} name="sender_passport_place_of_given" onChange={e => this.change(e)} />
                         </FormItem> 
                     </Col>
                     <Col span={8}>
                         <FormItem label="Телефон рақами">
-                            { getFieldDecorator('sender_phone_number', {
-                                rules: [{required: true, message: 'Илтимос телефон рақамни киритинг' }]
-                              })(
                                 <CurrencyFormat value={this.state.sender_phone_number} className="input" name="sender_phone_number" style={{ width: '100%' }} format="+998 (##) ###-####" mask="_" onChange={e => this.change(e)} placeholder="+998 ( __ ) ___-____" />
-                            )}
-                        
                         </FormItem> 
                     </Col>
                 </Row>
                 <Row gutter={21}>
                     <Col span={21}>
                         <FormItem label="Яшаш манзили">
-                            { getFieldDecorator('sender_permanent_address', {
-                                rules: [{required: true, message: 'Илтимос манзилни киритинг' }]
-                              })(
                                 <input  className="input" size="large" placeholder="Яшаш манзили" name="sender_permanent_address" onChange={e => this.change(e)} />
-                            )} 
                         </FormItem> 
                     </Col>
                 </Row>
                 <Row gutter={21}>
                     <Col span={21}>
                         <FormItem label="Ҳисобварақ рақами">
-                           { getFieldDecorator('sender_account_number', {
-                                rules: [{required: true, message: 'Илтимос Ҳисобварақ рақамини киритинг' }]
-                              })(
                                 <CurrencyFormat  className="input" name="sender_account_number" placeholder="Ҳисобварақ рақами" format="##### ### # ######## ###" mask="_" style={{ width: '100%'}} onChange={e => this.change(e)} />
-                            )}
-                            
                         </FormItem> 
                     </Col>
                 </Row>
                 <Row gutter={21}>
                     <Col span={10}>
                         <FormItem label="Пул ўтказмасининг тури">
-                            { getFieldDecorator('send_currency_type', {
-                                rules: [{required: true, message: 'Илтимос пул ўтказмасининг тури танланг' }]
-                              })(
                                 <Select size="large" name="send_currency_type" onChange={this.handleSelect}>
                                   {send_currency_types.map(d => <Option key={d.id}>{d.value}</Option> )}
                                 </Select>
-                            )}
-                            
                         </FormItem> 
                     </Col>
                     <Col span={11}>
                         <FormItem label="Топширилган пул шакли">
-                           { getFieldDecorator('send_payment_method', {
-                                rules: [{required: true, message: 'Илтимос топширилган пул шаклини танланг' }]
-                              })(
                                 <Select size="large" name="send_payment_method" onChange={this.handleSelect2}>
                                 {send_payment_methods.map(d => <Option key={d.id}>{d.value}</Option> )}
                         
                             </Select>
-                            )}
-                            
                         </FormItem> 
                     </Col>
                 </Row>
@@ -469,29 +428,20 @@ class PaymentSend extends Component {
                                 title={title}
                                 placement="topLeft"
                                 overlayClassName="numeric-input">
-                                 { getFieldDecorator('send_amount_in_number', {
-                                    rules: [{required: true, message: 'Илтимос суммани киритинг' }]
-                                  })(
                                     <CurrencyFormat className="input" name="send_amount_in_number" placeholder="Пул ўтказмасининг миқдори (сон билан)" id="success" onChange={e => this.onChange(e)} />
-                                  )} 
                             </Tooltip>
                         </FormItem> 
                     </Col>
                     <Col span={11}>
                         <FormItem label="Пул ўтказмасининг миқдори (сўз билан)">
-                                  { getFieldDecorator('send_amount_in_word', {
-                                    rules: [{required: true, message: 'Илтимос суммани киритинг (сўз билан)' }]
-                                  })(
                                     <input className="input" size="large" placeholder="Пул ўтказмасининг миқдори (сўз билан)" style={{ width: '100%'}} name="send_amount_in_word" onChange={e => this.change(e)} />
-                                  )} 
-                            
                         </FormItem> 
                     </Col>
                 </Row>
                 <Row gutter={21}>
                     <Col span={10}>
                         <FormItem label="Банк хизмати">
-                            <CurrencyFormat  className="input" thousandSeparator={true} disabled value={this.state.bank_profit}  placeholder="Банк хизмати" style={{ width: '100%'}}  name="commission" value={ this.state.send_amount_in_number ? (parseInt(this.state.send_amount_in_number, 10) + parseInt(this.state.send_amount_in_number) * (parseFloat(this.state.commission))/100) - parseFloat(this.state.send_amount_in_number): ""} onChange={e => this.change(e)} />
+                            <CurrencyFormat  className="input" thousandSeparator={true} disabled  placeholder="Банк хизмати" style={{ width: '100%'}}  name="commission" value={ this.state.send_amount_in_number ? (parseInt(this.state.send_amount_in_number, 10) + parseInt(this.state.send_amount_in_number) * (parseFloat(this.state.commission))/100) - parseFloat(this.state.send_amount_in_number): ""} onChange={e => this.change(e)} />
                         </FormItem> 
                     </Col>
                     <Col span={11}>
@@ -501,10 +451,18 @@ class PaymentSend extends Component {
                     </Col>
                 </Row>
                 <Row gutter={21}>
+                    <Col span={21}>
+                        <FormItem label="Олувчининг тўлиқ исми шарфи">
+                          <input  className="input" name="receiver_fullName_from_Sender" placeholder="Олувчининг тўлиқ исми шарфи" onChange={e => this.change(e)} />
+                        </FormItem> 
+                    </Col>
+                </Row>
+                <Row gutter={21}>
                   <Col style={{ float: "left" }} className="gutter-row" span={10}>
-                    <Button htmlType="submit" type="primary" onClick={this.handleOk} size="large" style={{ float: 'right' }}>Маълумотларни сақлаш</Button>
+                    <Button htmlType="submit" type="primary" onClick={this.handleSubmit} size="large" style={{ float: 'right' }}>Маълумотларни сақлаш</Button>
                   </Col>
               </Row>
+              
             </Form>
         </div>
     </DefaultLayout>

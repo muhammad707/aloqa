@@ -9,18 +9,14 @@ import { Breadcrumb,
         Form, 
         Input, 
         Button, 
-        message, 
         Table,
         Icon,
         Modal,
-        DatePicker, 
-        Select,
         notification
          } from 'antd';
 import Column from 'antd/lib/table/Column';
 import { getJwt } from '../../helpers/jwt';
 const FormItem = Form.Item;
-const Option = Select.Option;
 
 class AloqaMobileTransactions extends Component {
     constructor(props) {
@@ -31,7 +27,6 @@ class AloqaMobileTransactions extends Component {
             isLoading: false,
             secretCode: undefined,
             mobileTransactions: undefined,
-            secretCode: undefined,
             sender_fullName: undefined,
             sender_cardNumber: undefined,
             send_amount_in_number: undefined,
@@ -52,9 +47,27 @@ class AloqaMobileTransactions extends Component {
             receive_currency_types: [],
             receive_currency_type: undefined,
             receive_payment_methods: [],
-            receive_payment_method: undefined
+            receive_payment_method: undefined,
+            operator_id: undefined,
         }
         this.change = this.change.bind(this);
+    }
+
+    componentWillMount() {
+        this.fetchOperator();
+    }
+
+    fetchOperator = () => {
+        axios.get('/send', {
+            headers: {
+                Authorization: getJwt()
+            }
+        }).then((res => {
+            this.setState({ 
+                operator_id: res.data.result[0].id,
+                receive_department: res.data.result[0].Branch.MFO 
+            })
+        }));
     }
 
     formItemLayout = {
@@ -84,7 +97,7 @@ class AloqaMobileTransactions extends Component {
     }
     handleSubmit = (e) => {
         e.preventDefault();
-        const { secretCode } = this.state;
+        const { secretCode } = this.state;   
         let that = this;
         that.setState({
             isLoading: true
@@ -95,48 +108,62 @@ class AloqaMobileTransactions extends Component {
                 Authorization: getJwt()
             }
         }).then(res => {
-            this.setState({
-                fullName: res.data.transaction[0].sender_fullName,
-                send_amount_in_number: res.data.transaction[0].send_amount_in_number,
-                sender_cardNumber: res.data.transaction[0].sender_cardNumber,
-                createdAt: res.data.transaction[0].createdAt,
-                status: res.data.transaction[0].status
-            })
-            const listItem = (
-                <Table rowKey ="transaction_id" dataSource={res.data.transaction} >
+            console.log(res.data);
+            if(res.data.success) {
+                this.setState({
+                    transaction_id: res.data.transaction[0].transaction_id,
+                    sender_full_name: res.data.transaction[0].sender_full_name,
+                    amount: res.data.transaction[0].amount,
+                    sender_card_number: res.data.transaction[0].sender_card_number,
+                    createdAt: res.data.transaction[0].createdAt,
+                    receiver_full_name: res.data.transaction[0].receiver_full_name,
+                    status: res.data.transaction[0].status
+                });
+                const listItem = (
+                    <Table rowKey ="transaction_id" dataSource={res.data.transaction} >
                     <Column 
-                        title="Ф.И.Ш"
-                        key="sender_fullName"
-                        dataIndex="sender_fullName" />
-                    <Column 
-                        title="Жўнатма микдори"
-                        key="send_amount_in_number"
-                        dataIndex="send_amount_in_number" />
-                    <Column 
-                        title="Карта рақами"
-                        key="sender_cardNumber"
-                        dataIndex="sender_cardNumber" />
-                    <Column 
-                        title="Статус"
-                        key="status"
-                        dataIndex="status" />
-                    <Column 
-                        title="Қабул қилиш" 
-                        key="action"
-                        render={() => (
-                            <div>
-                                <Button disabled={this.state.status === 'оплачен' ? true : false} onClick={() => this.showModal()}>
-                                    <Icon  type="edit"/>
-                                </Button>
-                            </div>
-                        )} />
-                </Table>
-            );
-            this.setState({
-                mobileTransactions: listItem
-            })
-        }, () => {
-            console.log(this.state.transaction);
+                            title="Тартиб рақами"
+                            key="transaction_id"
+                            dataIndex="transaction_id" />
+                        <Column 
+                            title="Ф.И.Ш"
+                            key="sender_full_name"
+                            dataIndex="sender_full_name" />
+                        <Column 
+                            title="Карта рақами"
+                            key="sender_card_number"
+                            dataIndex="sender_card_number" />
+                        <Column 
+                            title="Жўнатма микдори"
+                            key="amount"
+                            dataIndex="amount" />
+                        <Column 
+                            title="Статус"
+                            key="status"
+                            dataIndex="status" />
+                        <Column 
+                            title="Қабул қилиш" 
+                            key="action"
+                            render={() => (
+                                <div>
+                                    <Button disabled={this.state.status === 'оплачен' ? true : false} onClick={() => this.showModal()}>
+                                        <Icon  type="edit"/>
+                                    </Button>
+                                </div>
+                            )} />
+                    </Table>
+                );
+                this.setState({
+                    mobileTransactions: listItem
+                });
+                notification['success']({
+                    message: res.data.message
+                })
+            } else {
+                notification['error']({
+                    message: res.data.message
+                });
+            }
         })
     }
 
@@ -155,7 +182,11 @@ class AloqaMobileTransactions extends Component {
            this.state.receiver_account_number
            ) {
                 let formData = {};
-                formData.receiver_fullName = `${this.state.receiver_lastName} ${this.state.receiver_firstName} ${this.state.receiver_middleName}`;
+                formData.receive_operator = this.state.operator_id;
+                formData.receive_department = this.state.receive_department;
+                formData.receiver_lastName = this.state.receiver_lastName;
+                formData.receiver_firstName = this.state.receiver_firstName;
+                formData.receiver_middleName = this.state.receiver_middleName;
                 formData.receiver_passport_series = this.state.receiver_passport_series;
                 formData.receiver_passport_number = this.state.receiver_passport_number;
                 formData.receiver_passport_date_of_issue = this.state.receiver_passport_date_of_issue;
@@ -164,7 +195,24 @@ class AloqaMobileTransactions extends Component {
                 formData.receiver_account_number = this.state.receiver_account_number;
                 formData.receiver_phone_number = this.state.receiver_phone_number;
                 formData.receiver_permanent_address = this.state.receiver_permanent_address;
+                formData.status = 2;
                 console.log(formData);
+                
+                axios.post('/api/mobile/confirmtransaction/' + this.state.secretCode, formData, {
+                    headers: {
+                        Authorization: getJwt()
+                    }
+                }).then(res => {
+                    if(res.data.success) {
+                        notification['success']({
+                            message: res.data.message
+                        });
+                        this.setState({
+                            visible:false,
+                            status: 'оплачен'
+                        })
+                    }
+                })
            } else {
                notification['error']({
                    message: 'Маълумот етарли эмас'
@@ -219,7 +267,7 @@ class AloqaMobileTransactions extends Component {
                    onCancel = { this.handleCancel} 
                    footer = {[
                     <Button key="back" onClick={this.handleCancel}>Бекор қилиш</Button>,
-                    <Button htmlType="submit" key="submit" type="primary" loading={loading} >Қабул қилиш</Button>
+                    <Button htmlType="submit" key="submit" type="primary" onClick={this.handleOk} loading={loading} >Қабул қилиш</Button>
                    ]}>
                     <Row  gutter={18}>
                         <Col className="gutter-row" span={10}>
@@ -228,13 +276,13 @@ class AloqaMobileTransactions extends Component {
                                     <input className="input" name="" value={this.state.secretCode}  disabled/>
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Ф.И.Ш">
-                                    <input className="input" name="receiver_fullname" value={this.state.fullName} placeholder="Ф.И.Ш" disabled />
+                                    <input className="input" name="sender_full_name" value={this.state.fullName} placeholder="Ф.И.Ш" disabled />
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Пул микдори">
-                                    <CurrencyFormat thousandSeparator={true} className="input" value={this.state.send_amount_in_number} placeholder="Пул микдори" disabled/>
+                                    <CurrencyFormat thousandSeparator={true} className="input" value={this.state.amount} placeholder="Пул микдори" disabled/>
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Ҳисобварақ рақами">
-                                    <input className="input" value={this.state.sender_cardNumber} placeholder="Ҳисобварақ рақами" disabled/>
+                                    <input className="input" value={this.state.sender_card_number} placeholder="Ҳисобварақ рақами" disabled/>
                                </FormItem>
                                <FormItem {...this.formItemLayout} label="Қачон юборилган">
                                     <input className="input" value={this.state.createdAt} placeholder="Пул бирлиги" disabled/>
@@ -242,12 +290,15 @@ class AloqaMobileTransactions extends Component {
                                <FormItem {...this.formItemLayout} label="Статус">
                                     <input className="input" value={this.state.status} disabled/>
                                </FormItem>
+                               <FormItem {...this.formItemLayout} label="Олувчи">
+                                    <input className="input" name="" value={this.state.receiver_full_name}  disabled/>
+                               </FormItem>
                            </Form>
                         </Col>
                         <Col className="gutter-row" span={13}>
                         <Form>
                             <FormItem {...this.formItemLayout} hasFeedback validateStatus="success"  label="Фамилияси">
-                                <Input  className="input" name="receiver_lastName" id="success" placeholder="Олучининг фамилияси" onChange={e => this.change(e)}/> 
+                                <input  className="input" name="receiver_lastName" id="success" placeholder="Олучининг фамилияси" onChange={e => this.change(e)}/> 
                             </FormItem>
                             <FormItem {...this.formItemLayout} hasFeedback validateStatus="success"  label="Исми">
                                 <input className="input" name="receiver_firstName" id="success" placeholder="Олучининг исми" onChange={e => this.change(e)}/>  
